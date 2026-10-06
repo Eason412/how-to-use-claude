@@ -338,44 +338,89 @@ def archive_backup(backup: pathlib.Path) -> pathlib.Path:
     return archive
 
 
-ICLOUD_NOTE = "该位置由 iCloud 同步，清理包已上传。删除后，请再到 iCloud.com 的“最近删除”中移除。"
+ICLOUD_NOTE = "该位置由 iCloud 同步，清理包已上传；删除后再到 iCloud.com 的“最近删除”中移除"
 
 
-# 完成对话框：原生 NSAlert（JXA），绿色对勾、标题、一段说明、两个按钮；位置按访达的本地化名称显示（如“桌面 › Claude清理包”）
+# 完成提示窗：无图标的小窗口，标题 + 编号要点 + 右下角按钮（“好”为默认）；位置按访达的本地化名称显示（如“桌面 › Claude清理包”）
 DONE_DIALOG_JS = r"""
 ObjC.import('AppKit');
+let choice = 'done';
+ObjC.registerSubclass({
+  name: 'CleanupDoneTarget',
+  methods: { 'pick:': { types: ['void', ['id']], implementation: function (sender) {
+    choice = sender.tag == 1 ? 'reveal' : 'done';
+    $.NSApplication.sharedApplication.stopModal;
+  } } },
+});
 function run(argv) {
-  const [level, folder, warn] = argv;
+  const [folder, level, next, warn] = argv;
   const app = $.NSApplication.sharedApplication;
   app.setActivationPolicy($.NSApplicationActivationPolicyAccessory);
-  app.activateIgnoringOtherApps(true);
   const fm = $.NSFileManager.defaultManager;
   // 访达显示名；路径尚不存在时取最近的已存在上级再拼接
   const names = p => ObjC.deepUnwrap(fm.componentsToDisplayForPath(p))
     || (p.lastIndexOf('/') > 0 ? names(p.slice(0, p.lastIndexOf('/'))).concat(p.slice(p.lastIndexOf('/') + 1)) : [p]);
   const home = names($.NSHomeDirectory().js), parts = names(folder);
-  const inHome = home.every((name, i) => parts[i] === name);
-  const place = (inHome ? parts.slice(home.length) : parts).join(' › ');
-  const alert = $.NSAlert.alloc.init;
-  alert.messageText = '已完成清理';
-  alert.informativeText = level + '\n\n清理包已保存到“' + place + '”。确认 Claude Code 一切正常后，删除清理包并清空废纸篓。'
-    + (warn ? '\n\n' + warn : '');
-  try {
-    const icon = $.NSImage.imageWithSystemSymbolNameAccessibilityDescription('checkmark.seal.fill', 'done');
-    const size = $.NSImageSymbolConfiguration.configurationWithPointSizeWeightScale(56, 0, 3);
-    const colors = $.NSImageSymbolConfiguration.configurationWithPaletteColors($([$.NSColor.whiteColor, $.NSColor.systemGreenColor]));
-    alert.icon = icon.imageWithSymbolConfiguration(size.configurationByApplyingConfiguration(colors));
-  } catch (e) {}
-  alert.addButtonWithTitle('好');
-  alert.addButtonWithTitle('在访达中显示');
-  return alert.runModal == 1001 ? 'reveal' : 'done';
+  const place = (home.every((name, i) => parts[i] === name) ? parts.slice(home.length) : parts).join(' › ');
+  const items = [level, '清理包保存在“' + place + '”', next, warn].filter(Boolean);
+  const W = 420;
+  const text = (s, size, weight, color) => {
+    const f = $.NSTextField.wrappingLabelWithString(s);
+    f.font = $.NSFont.systemFontOfSizeWeight(size, weight);
+    if (color) f.textColor = color;
+    f.preferredMaxLayoutWidth = W - 76;
+    return f;
+  };
+  const number = n => {  // 序号用不换行标签，列宽只取数字宽度
+    const f = $.NSTextField.labelWithString(n + '.');
+    f.font = $.NSFont.monospacedDigitSystemFontOfSizeWeight(13, 0);
+    f.textColor = $.NSColor.secondaryLabelColor;
+    return f;
+  };
+  const grid = $.NSGridView.gridViewWithViews($(items.map((s, i) =>
+    $([number(i + 1), text(s, 13, 0)]))));
+  grid.rowSpacing = 8; grid.columnSpacing = 6;
+  grid.columnAtIndex(0).xPlacement = 3; grid.columnAtIndex(0).width = 16;
+  const target = $.CleanupDoneTarget.alloc.init;
+  const button = (title, tag, key) => {
+    const b = $.NSButton.buttonWithTitleTargetAction(title, target, 'pick:');
+    b.tag = tag; b.keyEquivalent = key; b.controlSize = 3;
+    b.widthAnchor.constraintGreaterThanOrEqualToConstant(88).active = true;
+    return b;
+  };
+  const buttons = $.NSStackView.alloc.init;
+  buttons.addViewInGravity(button('在访达中显示', 1, ''), 3);
+  buttons.addViewInGravity(button('好', 0, '\r'), 3);
+  buttons.spacing = 10;
+  const stack = $.NSStackView.stackViewWithViews($([text('已完成清理', 15, 0.4), grid, buttons]));
+  stack.orientation = 1; stack.alignment = 1; stack.spacing = 14;
+  stack.setCustomSpacingAfterView(22, grid);
+  stack.edgeInsets = { top: 30, left: 24, bottom: 20, right: 24 };
+  stack.translatesAutoresizingMaskIntoConstraints = false;
+  const win = $.NSWindow.alloc.initWithContentRectStyleMaskBackingDefer($.NSMakeRect(0, 0, W, 10), 1 | (1 << 15), 2, false);
+  win.titlebarAppearsTransparent = true; win.titleVisibility = 1; win.movableByWindowBackground = true;
+  const content = win.contentView;
+  content.addSubview(stack);
+  for (const edge of ['leadingAnchor', 'trailingAnchor', 'topAnchor', 'bottomAnchor'])
+    stack[edge].constraintEqualToAnchor(content[edge]).active = true;
+  buttons.widthAnchor.constraintEqualToAnchorConstant(stack.widthAnchor, -48).active = true;
+  content.widthAnchor.constraintEqualToConstant(W).active = true;
+  content.layoutSubtreeIfNeeded;
+  win.setContentSize(content.fittingSize);
+  win.center; win.level = 3;
+  app.activateIgnoringOtherApps(true);
+  win.makeKeyAndOrderFront(null);
+  app.runModalForWindow(win);
+  win.orderOut(null);
+  return choice;
 }
 """
 
 
 def notify_done(archive: pathlib.Path, level: int, icloud: bool = False) -> None:
     """弹出“已完成清理”对话框，可在访达中显示清理包；没有图形界面（如 SSH）时静默跳过。"""
-    args = [f"档位 {level} · {LEVEL_SHORT[level]}", str(archive.parent), ICLOUD_NOTE if icloud else ""]
+    args = [str(archive.parent), f"档位 {level} · {LEVEL_SHORT[level]}{'（保留登录）' if level < 3 else ''}",
+            "确认 Claude Code 一切正常后，删除清理包并清空废纸篓", ICLOUD_NOTE if icloud else ""]
     try:
         result = subprocess.run(["osascript", "-l", "JavaScript", "-e", DONE_DIALOG_JS, *args],
                                 capture_output=True, text=True, timeout=900)
