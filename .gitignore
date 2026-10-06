@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+node_modules/
+.env
+.env.*
+*.pdf
+
+# 本机私有环境记录，不入库
+skills/*/references/*.local.md

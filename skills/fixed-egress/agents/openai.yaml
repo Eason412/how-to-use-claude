@@ -1,0 +1,4 @@
+interface:
+  display_name: "固定出口"
+  short_description: "让指定应用或流量保持固定出口，支持更换入口、链式代理与跨客户端验收"
+  default_prompt: "使用 $fixed-egress 核实我的实际链路，在保留指定最终出口的前提下完成本次迁移或排查。"

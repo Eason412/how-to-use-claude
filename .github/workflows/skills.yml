@@ -1,0 +1,32 @@
+name: Skills
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "skills/claude-cleanup/**"
+      - ".github/workflows/skills.yml"
+  pull_request:
+    paths:
+      - "skills/claude-cleanup/**"
+      - ".github/workflows/skills.yml"
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  claude-cleanup:
+    name: claude-cleanup regression
+    # 清理脚本面向 macOS（ps、security、~/Library），在 macOS 上测试
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: skills/claude-cleanup
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v10.2.0
+      - name: Regression
+        run: uv run --no-project --python 3.12 python -m unittest discover -s tests -v

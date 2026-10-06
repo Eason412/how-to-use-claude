@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude 本机清理"
+  short_description: "审计、备份并安全清理 Claude Code 与 Claude Desktop 的本机缓存、日志和登录态"
+  default_prompt: "使用 $claude-cleanup 先只读审计我的 Claude 本机状态，说明可清理项和风险操作。"
