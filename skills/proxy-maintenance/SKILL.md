@@ -11,8 +11,9 @@ description: "维护已在使用的代理与固定出口：订阅更新、连接
 
 ## 先做
 
-1. 读 [连接保护](references/connection-safety.md)，识别当前会话依赖；当前助手依赖的桥接、代理或隧道不能在该链路内停止、重启或撤口。
+1. 读 [连接保护](references/connection-safety.md)，识别当前会话依赖；当前助手依赖的桥接、代理或隧道不能在该链路内停止、重启或撤口，这项约束不以用户另说“保持连接”为前提。
 2. 查使用者的环境记录：[项目入口](references/environment.md)，再读取本次涉及的实际配置与运行态；记录与现场冲突时以现场为准。
+3. 按症状定位故障层：DNS、规则、节点、协议、服务器、防火墙和上游。规则模式、系统代理和 TUN 是不同层；首页 IP、HTTP 200、节点延迟和浏览器错误都不能单独证明应用路径。
 
 ## 按任务读取
 
@@ -20,7 +21,7 @@ description: "维护已在使用的代理与固定出口：订阅更新、连接
 |---|---|
 | 切订阅后断网、更新节点或规则 | [订阅更新](references/subscription-update.md) |
 | 超时、慢、某协议或地址失败、资源占用 | [分层排查](references/troubleshooting.md)（含性能对照） |
-| DNS／WebRTC 是否绕过代理 | [泄露验证](references/leak-check.md) |
+| DNS／WebRTC 是否绕过代理 | [泄露验证](references/leak-check.md)；要求代理停止后也不直连时读 [应用故障保护](../proxy-setup/references/egress-app-protection.md) |
 | 在订阅卡片显示 VPS 月用量 | [月用量卡片](references/quota-card.md) |
 | DigitalOcean：SSH 来源变化、失联、流量与账单 | [DigitalOcean 维护](references/digitalocean.md) |
 | IPRoyal：认证、续期与流量 | [IPRoyal 维护](references/iproyal.md) |
@@ -33,6 +34,7 @@ description: "维护已在使用的代理与固定出口：订阅更新、连接
 
 - 维护与订阅切换同时核对应用显式入口和候选配置的监听、绑定目标。缺少固定入口导致应用拒绝连接时，不据此认定远端出口故障，也不撤销断线保护来修配置不匹配。
 - 受保护范围失败时拒绝，不降级到 DIRECT、裸机场或不合格旧链；普通订阅不自动当作固定出口备用，不擅自改用户命名。
+- 实施已有授权内的改动，不重复索取已明确的许可；会影响用户要求保持的连接时暂停。
 - 只改受支持的持久源，生成后读回运行态；控制 API 的临时加载不代表下次启动仍有效。只筛选本次相关连接，旧连接不默认断开。
 - 同一目标连续两次失败先停下排查：哪条假设被证伪、哪个决定引入问题、能否同时满足要求；结构性冲突转 proxy-setup 改结构，不继续调参。
 
