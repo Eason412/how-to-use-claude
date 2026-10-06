@@ -9,7 +9,7 @@
 | 一、Claude 本机清理 | [claude-cleanup](skills/claude-cleanup/SKILL.md) |
 | 二、搭建 VPS、协议、客户端、分流与固定出口 | [proxy-setup](skills/proxy-setup/SKILL.md) |
 | 三、维护已在用的链路 | [proxy-maintenance](skills/proxy-maintenance/SKILL.md) |
-| 安装、导航与 CI | 根 README、`scripts/link-skills.sh` 和 `.github/workflows/` |
+| 安装、导航与 CI | 根 README（给使用者，讲效果）、`SETUP.md`（给 Agent，讲安装步骤）、`scripts/link-skills.sh` 和 `.github/workflows/` |
 
 claude-cleanup 是独立安装单元。proxy-setup 与 proxy-maintenance 互相引用对方的 `references/`，作为一对安装；改动其中一方的文件名或锚点时，同步修复另一方的链接。分界：搭建管“从无到可用”与结构性改动（新建、换入口、换协议、重做链路），维护管已在用链路的日常事务；新增内容按这条分界放，不在两边重复。入口为 `SKILL.md`，Codex 的显示信息放在 `agents/openai.yaml`。
 
@@ -19,7 +19,7 @@ claude-cleanup 是独立安装单元。proxy-setup 与 proxy-maintenance 互相�
 
 - 先检查 Git 状态，保留现有改动；只处理用户要求及其必要关联变更。
 - claude-cleanup 的行为修复补充回归测试；新增清理目标或键时，先用安装版本的 `--help` 与官方文档核对名称，在其目录运行 `PYTHONDONTWRITEBYTECODE=1 uv run --no-project python -m unittest discover -s tests -v`。测试使用临时 HOME，不碰真实 `~/.claude`。
-- proxy-setup、proxy-maintenance 只有规范文本，改动检查内容、差异与相对链接。修改 Skill 规范后用 `quick_validate.py` 等校验工具检查 frontmatter；README 改动用 project-docs 的 `check_readme.py` 检查链接，中英文 README 保持一致。
+- proxy-setup、proxy-maintenance 只有规范文本，改动检查内容、差异与相对链接。修改 Skill 规范后用 `quick_validate.py` 等校验工具检查 frontmatter；README 改动用 project-docs 的 `check_readme.py` 检查链接，中英文 README 保持一致；Skill 的效果、档位或安装方式变化时，同步 README 与 `SETUP.md`。
 
 ## 数据与发布
 
