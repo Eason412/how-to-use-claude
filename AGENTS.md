@@ -19,7 +19,7 @@ claude-cleanup 是独立安装单元。proxy-setup 与 proxy-maintenance 互相�
 
 - 先检查 Git 状态，保留现有改动；只处理用户要求及其必要关联变更。
 - claude-cleanup 的行为修复补充回归测试；新增清理目标或键时，先用安装版本的 `--help` 与官方文档核对名称，在其目录运行 `PYTHONDONTWRITEBYTECODE=1 uv run --no-project python -m unittest discover -s tests -v`。测试使用临时 HOME，不碰真实 `~/.claude`。
-- proxy-setup、proxy-maintenance 只有规范文本，改动检查内容、差异与相对链接。修改 Skill 规范后用 `quick_validate.py` 等校验工具检查 frontmatter；README 改动用 project-docs 的 `check_readme.py` 检查链接，中英文 README 保持一致；Skill 的效果、档位或安装方式变化时，同步 README 与 `SETUP.md`。
+- proxy-setup、proxy-maintenance 只有规范文本，改动检查内容、差异与相对链接。修改 Skill 规范后用 `quick_validate.py` 等校验工具检查 frontmatter；README 只有中文版，改动用 project-docs 的 `check_readme.py --file README.md` 检查链接；Skill 的效果、档位或安装方式变化时，同步 README 与 `SETUP.md`。
 
 ## 数据与发布
 
