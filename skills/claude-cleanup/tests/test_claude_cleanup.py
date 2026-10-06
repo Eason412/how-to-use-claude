@@ -511,6 +511,13 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(calls[0][0], "osascript")
         self.assertIn("已完成清理", calls[0][-1])
         self.assertEqual(calls[1], ["open", "-R", str(archives[0])])
+        calls.clear()
+        with mock.patch.object(cleanup.subprocess, "run", side_effect=run):
+            cleanup.notify_done(archives[0], 2, icloud=True)
+        self.assertIn("iCloud", calls[0][-1])
+        self.assertTrue(cleanup.icloud_synced(home / "Desktop", home) is False)
+        (home / "Library/Mobile Documents/com~apple~CloudDocs/Desktop").mkdir(parents=True)
+        self.assertTrue(cleanup.icloud_synced(archives[0].parent, home))
         with mock.patch.object(cleanup.subprocess, "run", side_effect=OSError("no gui")):
             cleanup.notify_done(archives[0], 2)
 

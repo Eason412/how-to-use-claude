@@ -337,10 +337,14 @@ def archive_backup(backup: pathlib.Path) -> pathlib.Path:
     return archive
 
 
-def notify_done(archive: pathlib.Path, level: int) -> None:
+ICLOUD_NOTE = "清理包在 iCloud“桌面与文稿”同步范围内，已上传到 iCloud；删除后还要到 iCloud.com 云盘的“最近删除”中彻底删除。"
+
+
+def notify_done(archive: pathlib.Path, level: int, icloud: bool = False) -> None:
     """弹出“已完成清理”对话框，可在访达中显示清理包；没有图形界面（如 SSH）时静默跳过。"""
     text = (f"已完成清理（档位 {level}：{LEVEL_NAMES[level]}）。\n\n清理包：{archive.name}\n\n"
-            "新开 Claude Code 确认一切正常后，删除清理包并清空废纸篓，清理才算彻底。")
+            "新开 Claude Code 确认一切正常后，删除清理包并清空废纸篓，清理才算彻底。"
+            + (f"\n\n{ICLOUD_NOTE}" if icloud else ""))
     script = ['on run argv', 'display dialog (item 1 of argv) with title "Claude 清理" buttons {"在访达中显示清理包", "好"} '
               'default button "好" with icon note giving up after 600', 'end run']
     try:
@@ -743,7 +747,10 @@ def main(argv: list[str] | None = None) -> int:
                   + ("并在 Settings > Claude Code 吊销本机 token、按需登出全部会话。" if level >= 3 else "按需吊销不用的 Claude Code token。"))
         print("要彻底去掉旧痕迹：新开 Claude Code 确认正常后，删除上面的清理包并清空废纸篓（脚本没有清空废纸篓）"
               + ("；删除后，purge 掉的会话和钥匙串凭证就无法再恢复。" if level >= 3 else "。"))
-        notify_done(archive, level)
+        icloud = icloud_synced(archive.parent, home)
+        if icloud:
+            print(ICLOUD_NOTE)
+        notify_done(archive, level, icloud)
         return 0
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError, json.JSONDecodeError, sqlite3.Error,
             tarfile.TarError) as error:

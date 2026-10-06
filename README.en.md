@@ -28,7 +28,7 @@ Cleans the privacy traces Claude Code and Claude Desktop leave on macOS. Pick on
 | 2 Clear device IDs | Also deletes device identifiers, experiment caches, old identity snapshots and prompt history | Kept |
 | 3 Sign out and clear sessions | Also signs out and deletes local sessions and the Keychain credentials | Signed out |
 
-- **Backup first**: the first write is a full backup, verified file by file. At the end it is packed into `Claude清理包-<time>.tar.gz` ("Claude cleanup pack"), on the Desktop by default or in a folder you choose.
+- **Backup first**: the first write is a full backup, verified file by file. At the end it is packed into `Claude清理包-<time>.tar.gz` ("Claude cleanup pack"), on the Desktop by default or in a folder you choose. If that folder is synced by iCloud Desktop & Documents, a reminder appears before confirmation and again at the end.
 - **Reversible**: files only move to the Trash. Level 3 session purge and Keychain removal are the exception; they can only be restored from the cleanup pack.
 - **Personal assets kept**: skills, hooks, plugins, `CLAUDE.md`, unselected settings keys, project folders and Codex data always stay; project memory is restored from the backup by default.
 - **One confirmation, a completion notice**: nothing is written until you review the full list and type `CONFIRM` once. A "cleanup complete" dialog appears at the end and can reveal the pack in Finder.
