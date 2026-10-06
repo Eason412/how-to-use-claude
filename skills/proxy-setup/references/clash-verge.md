@@ -12,7 +12,7 @@ Windows额外读 [Windows适配](windows.md)：原生SSH、NTFS权限、服务�
 
 Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官方扩展说明](https://www.clashverge.dev/guide/extend.html)与最终生成结果核对，不只检查某一层脚本。共同规则放合适的共享扩展，专属链放实际 profile 的扩展或自有主配置；应用可能最终回写 mode、tun 等字段。
 
-重新激活／切换前先核对该版本是否关闭现有连接，并按 [运行维护](maintenance.md) 判断能否实施。经授权从应用重新激活订阅可生成持久配置；API 热加载只证明当前运行态，不代表下次仍在。不得用扩展写 mode=rule 冒充锁住 GUI 全局模式。
+重新激活／切换前先核对该版本是否关闭现有连接，并按 [运行维护](../../proxy-maintenance/references/connection-safety.md) 判断能否实施。经授权从应用重新激活订阅可生成持久配置；API 热加载只证明当前运行态，不代表下次仍在。不得用扩展写 mode=rule 冒充锁住 GUI 全局模式。
 
 ## 节点与引用
 
@@ -31,14 +31,5 @@ Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官�
 - CLI 显式代理在其自身受支持的设置内配置，不污染全局 shell；GUI 不一定遵循终端环境。被动关联本机 socket 与 inboundPort/sourcePort，不凭时间相邻就宣布某应用已命中。
 - Chrome 等浏览器 helper 名称随版本变化，整浏览器固定范围会涵盖其中其他网站和下载。不能用一个 helper 的证据覆盖所有扩展、native host 或旁路。
 
-规则源与语法参考：[Mihomo 规则](https://wiki.metacubex.one/config/rules/)、[节点集合](https://wiki.metacubex.one/config/proxy-providers/)、[规则集合](https://wiki.metacubex.one/config/rule-providers/)。实际测试的范围按 [固定出口验收](../../fixed-egress/references/validation.md)执行。
+规则源与语法参考：[Mihomo 规则](https://wiki.metacubex.one/config/rules/)、[节点集合](https://wiki.metacubex.one/config/proxy-providers/)、[规则集合](https://wiki.metacubex.one/config/rule-providers/)。实际测试的范围按 [固定出口验收](egress-validation.md)执行。
 
-## macOS 服务升级锁冲突
-
-遇到 `service owner lock is held`／`stop the service before stale-owner maintenance`，先保存应用日志及对应时段的 launchd unified log，区分 GUI、特权服务、Mihomo 内核三个进程。不能把“内核已停”当成系统服务已退出，也不能把窗口关闭当成停服。
-
-按时间核对版本不匹配、安装动作、旧服务 bootout、锁失败、新服务 bootstrap、内核启动。若 bootout 后立即维护 owner 状态且非阻塞获取锁失败，需对照安装版本源码检查是否缺少退出／锁释放等待；没有当时的锁持有者证据时，将具体持锁 PID 标为推断。重试成功只证明恢复，不证明竞态已消除。
-
-`owner.lock` 是进程互斥锁，不是删掉文件就能安全清理的标记。不要删锁、按名字批量杀进程或在服务已恢复时反复重装。需再次维护时，先具备独立恢复通道和维护窗口，再确认服务已退出、锁可用再安装；安装器的持久修复应是有超时的锁等待／重试，超时保存诊断并停止。
-
-源码定位参考：[安装器](https://github.com/clash-verge-rev/clash-verge-service-ipc/blob/v2.7.6/src/bin/install_service.rs)、[维护锁](https://github.com/clash-verge-rev/clash-verge-service-ipc/blob/v2.7.6/src/core/maintenance.rs)。这是历史版本的机制证据；当前版本另查。恢复后核对运行服务与应用自带版本、服务模式、TUN、DNS 接管和固定出口；KeepAlive 不等于断线保护。

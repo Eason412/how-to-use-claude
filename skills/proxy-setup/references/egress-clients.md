@@ -12,10 +12,10 @@
 
 ## 已有适配资料
 
-- [Clash Verge／Mihomo](../../proxy-setup/references/clash-verge.md)：扩展层、provider、dialer-proxy、固定入站与版本行为。
-- [Windows](../../proxy-setup/references/windows.md)：客户端与Linux服务器分离、PowerShell／NTFS、TUN服务与WSL独立验收。Windows可使用同一固定出口拓扑，但不是Mac配置的原样复制。
-- [Shadowrocket](../../proxy-setup/references/shadowrocket.md)：首页节点与配置页分离、“代理通过”、备注精确引用、镜像输入与手机验收。
-- [导入导出](../../proxy-setup/references/import-export.md)：定名、备份、读取实际保存值和清理流程。
+- [Clash Verge／Mihomo](clash-verge.md)：扩展层、provider、dialer-proxy、固定入站与版本行为。
+- [Windows](windows.md)：客户端与Linux服务器分离、PowerShell／NTFS、TUN服务与WSL独立验收。Windows可使用同一固定出口拓扑，但不是Mac配置的原样复制。
+- [Shadowrocket](shadowrocket.md)：首页节点与配置页分离、“代理通过”、备注精确引用、镜像输入与手机验收。
+- [导入导出](import-export.md)：定名、备份、读取实际保存值和清理流程。
 
 其他客户端没有现成适配资料时，先查其当前官方文档和实际 UI／配置，不套用上述字段。VPN 客户端可能仅提供整机隧道、没有链式代理或策略组；这时不能承诺等价分流。
 

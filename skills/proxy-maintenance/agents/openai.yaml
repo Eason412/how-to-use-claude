@@ -1,0 +1,4 @@
+interface:
+  display_name: "代理日常维护"
+  short_description: "订阅更新、连接与速度排障、泄露检查、用量与续费，保护当前连接"
+  default_prompt: "使用 $proxy-maintenance 检查我现有的代理与固定出口，按本次请求完成排障或维护。"

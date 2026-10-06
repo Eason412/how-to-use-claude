@@ -6,7 +6,7 @@
 
 代理 IP／端口／用户名／密码不是供应商网站登录账号。读取凭证仅用于授权操作，密码不重复展示；重置凭证需要同步所有受影响客户端，不能作为默认排错。
 
-HTTP／HTTPS 标签可能表示 HTTP 代理能访问 HTTPS 网站，不足以证明客户端到代理已有 TLS。SOCKS5 不自带加密，协议支持 UDP 不等于产品开放 UDP。链式加密边界见 [链路说明](../../fixed-egress/references/chain-policy.md)。
+HTTP／HTTPS 标签可能表示 HTTP 代理能访问 HTTPS 网站，不足以证明客户端到代理已有 TLS。SOCKS5 不自带加密，协议支持 UDP 不等于产品开放 UDP。链式加密边界见 [链路说明](../../proxy-setup/references/egress-chain.md)。
 
 IP 白名单、密码认证、并发和设备许可按当前产品确认。设备都经一个 VPS可能呈现相同来源，但不由此推导供应商多设备授权；历史客服答复不能变成所有订单的规则。
 

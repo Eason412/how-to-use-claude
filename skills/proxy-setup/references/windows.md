@@ -61,6 +61,6 @@ Windows 的 `Test-NetConnection SERVER_IP -Port 22` 只测 TCP，不证明 HY2 U
 
 ## 5. 完成条件
 
-实际 Windows 应用的新请求连通、命中期望规则、出口符合要求；TUN需求另确认接管与 DNS／IPv6；固定出口按 [专链验收](../../fixed-egress/references/validation.md)。经授权验证重启客户端或登录恢复后持久性，但不为写文档而重启当前链路。
+实际 Windows 应用的新请求连通、命中期望规则、出口符合要求；TUN需求另确认接管与 DNS／IPv6；固定出口按 [专链验收](egress-validation.md)。经授权验证重启客户端或登录恢复后持久性，但不为写文档而重启当前链路。
 
 没有 Windows 现场时，明确标为“官方资料核对，Windows 实机未验收”；不能用 Mac 的结果替代。

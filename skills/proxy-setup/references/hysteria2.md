@@ -1,6 +1,6 @@
 # Hysteria2 从空服务器到客户端
 
-这是已选定 HY2 后的具体部署分支，不意味着它适合所有网络。前提：有可管理的 Linux VPS、目标客户端支持 HY2、计划使用的 UDP 入口可达；Windows／macOS 只是客户端平台，Linux 服务端步骤相同。入口 UDP 被网络阻断时不要宣称换 TCP443规则就能修复，转回 [分层排查](troubleshooting.md) 选择兼容结构。
+这是已选定 HY2 后的具体部署分支，不意味着它适合所有网络。前提：有可管理的 Linux VPS、目标客户端支持 HY2、计划使用的 UDP 入口可达；Windows／macOS 只是客户端平台，Linux 服务端步骤相同。入口 UDP 被网络阻断时不要宣称换 TCP443规则就能修复，转回 [分层排查](../../proxy-maintenance/references/troubleshooting.md) 选择兼容结构。
 
 ## 1. 记录安装范围
 
@@ -90,7 +90,7 @@ proxies:
 
 在不承载生产流量的临时节点做对照：正确指纹的认证及公共请求成功，将指纹改一个字符后同类新请求必须失败，再删除临时错误节点。每个设备分别执行；如果正确指纹仍失败，停止并检查该版本固定指纹与系统CA验证的组合语义，选自定义CA或受信证书，不设置 insecure=true“修好”。这项未完成就不能声称无域名方案已安全可用。
 
-桌面按 [Clash Verge](clash-verge.md) 或实际客户端添加原生策略、DNS与接管配置，Windows另读 [平台适配](windows.md)。iPhone且使用Shadowrocket时按 [手机适配](shadowrocket.md) 导入；Android或其他客户端先核实其HY2与证书信任能力，再生成原生配置并读回，不默认使用小火箭。没有要固定 ISP 的请求就到此为止；需要时进入 [固定出口](../../fixed-egress/SKILL.md)，不将 VPS裸出口称为静态 ISP。
+桌面按 [Clash Verge](clash-verge.md) 或实际客户端添加原生策略、DNS与接管配置，Windows另读 [平台适配](windows.md)。iPhone且使用Shadowrocket时按 [手机适配](shadowrocket.md) 导入；Android或其他客户端先核实其HY2与证书信任能力，再生成原生配置并读回，不默认使用小火箭。没有要固定 ISP 的请求就到此为止；需要时进入 [固定出口链路](egress-chain.md)，不将 VPS裸出口称为静态 ISP。
 
 ## 6. 验收、维护和撤回
 
