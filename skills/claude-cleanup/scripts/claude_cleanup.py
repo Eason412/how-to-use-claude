@@ -705,7 +705,7 @@ def main(argv: list[str] | None = None) -> int:
     backup = None
     try:
         print("\n可再生缓存和日志自动纳入清单，不逐项询问。")
-        level = ask_choice("档位：0 只清缓存；1 关上报；2 再清设备标识（保留登录）；3 再登出并清本地会话。选择 [0]：", {0, 1, 2, 3})
+        level = ask_choice("档位：0 只清缓存；1 关上报；2 再清设备标识（保留登录）；3 再登出并清本地会话（推荐）。选择 [0]：", {0, 1, 2, 3})
         total_switch = cleanup_days = None
         project_stats = keep_memory = clear_switch = False
         if level >= 1:
