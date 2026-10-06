@@ -504,17 +504,17 @@ class CleanupTests(unittest.TestCase):
 
         def run(cmd, **kwargs):
             calls.append(cmd)
-            return subprocess.CompletedProcess(cmd, 0, stdout="button returned:在访达中显示清理包\n", stderr="")
+            return subprocess.CompletedProcess(cmd, 0, stdout="reveal\n", stderr="")
 
         with mock.patch.object(cleanup.subprocess, "run", side_effect=run):
             cleanup.notify_done(archives[0], 2)
-        self.assertEqual(calls[0][0], "osascript")
-        self.assertIn("已完成清理", calls[0][-1])
+        self.assertEqual(calls[0][:3], ["osascript", "-l", "JavaScript"])
+        self.assertIn(str(archives[0].parent), calls[0])
         self.assertEqual(calls[1], ["open", "-R", str(archives[0])])
         calls.clear()
         with mock.patch.object(cleanup.subprocess, "run", side_effect=run):
             cleanup.notify_done(archives[0], 2, icloud=True)
-        self.assertIn("iCloud", calls[0][-1])
+        self.assertIn(cleanup.ICLOUD_NOTE, calls[0])
         self.assertTrue(cleanup.icloud_synced(home / "Desktop", home) is False)
         (home / "Library/Mobile Documents/com~apple~CloudDocs/Desktop").mkdir(parents=True)
         self.assertTrue(cleanup.icloud_synced(archives[0].parent, home))

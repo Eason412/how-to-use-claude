@@ -23,6 +23,7 @@ import tarfile
 import tempfile
 
 BACKUP_NAME = "Claude清理包"  # 文件夹名，也是压缩包名前缀
+LEVEL_SHORT = ("只清缓存", "关上报", "清设备标识", "登出并清会话")
 LEVEL_NAMES = ("只清缓存日志", "关上报", "关上报 + 清设备标识（保留登录）", "关上报 + 清设备标识 + 登出并清本地会话")
 # 用户级 settings.json 的隐私开关；总开关会连带停自动更新，单独询问
 PRIVACY_ENV = {
@@ -337,20 +338,48 @@ def archive_backup(backup: pathlib.Path) -> pathlib.Path:
     return archive
 
 
-ICLOUD_NOTE = "清理包在 iCloud“桌面与文稿”同步范围内，已上传到 iCloud；删除后还要到 iCloud.com 云盘的“最近删除”中彻底删除。"
+ICLOUD_NOTE = "该位置由 iCloud 同步，清理包已上传。删除后，请再到 iCloud.com 的“最近删除”中移除。"
+
+
+# 完成对话框：原生 NSAlert（JXA），绿色对勾、标题、一段说明、两个按钮；位置按访达的本地化名称显示（如“桌面 › Claude清理包”）
+DONE_DIALOG_JS = r"""
+ObjC.import('AppKit');
+function run(argv) {
+  const [level, folder, warn] = argv;
+  const app = $.NSApplication.sharedApplication;
+  app.setActivationPolicy($.NSApplicationActivationPolicyAccessory);
+  app.activateIgnoringOtherApps(true);
+  const fm = $.NSFileManager.defaultManager;
+  // 访达显示名；路径尚不存在时取最近的已存在上级再拼接
+  const names = p => ObjC.deepUnwrap(fm.componentsToDisplayForPath(p))
+    || (p.lastIndexOf('/') > 0 ? names(p.slice(0, p.lastIndexOf('/'))).concat(p.slice(p.lastIndexOf('/') + 1)) : [p]);
+  const home = names($.NSHomeDirectory().js), parts = names(folder);
+  const inHome = home.every((name, i) => parts[i] === name);
+  const place = (inHome ? parts.slice(home.length) : parts).join(' › ');
+  const alert = $.NSAlert.alloc.init;
+  alert.messageText = '已完成清理';
+  alert.informativeText = level + '\n\n清理包已保存到“' + place + '”。确认 Claude Code 一切正常后，删除清理包并清空废纸篓。'
+    + (warn ? '\n\n' + warn : '');
+  try {
+    const icon = $.NSImage.imageWithSystemSymbolNameAccessibilityDescription('checkmark.seal.fill', 'done');
+    const size = $.NSImageSymbolConfiguration.configurationWithPointSizeWeightScale(56, 0, 3);
+    const colors = $.NSImageSymbolConfiguration.configurationWithPaletteColors($([$.NSColor.whiteColor, $.NSColor.systemGreenColor]));
+    alert.icon = icon.imageWithSymbolConfiguration(size.configurationByApplyingConfiguration(colors));
+  } catch (e) {}
+  alert.addButtonWithTitle('好');
+  alert.addButtonWithTitle('在访达中显示');
+  return alert.runModal == 1001 ? 'reveal' : 'done';
+}
+"""
 
 
 def notify_done(archive: pathlib.Path, level: int, icloud: bool = False) -> None:
     """弹出“已完成清理”对话框，可在访达中显示清理包；没有图形界面（如 SSH）时静默跳过。"""
-    text = (f"已完成清理（档位 {level}：{LEVEL_NAMES[level]}）。\n\n清理包：{archive.name}\n\n"
-            "新开 Claude Code 确认一切正常后，删除清理包并清空废纸篓，清理才算彻底。"
-            + (f"\n\n{ICLOUD_NOTE}" if icloud else ""))
-    script = ['on run argv', 'display dialog (item 1 of argv) with title "Claude 清理" buttons {"在访达中显示清理包", "好"} '
-              'default button "好" with icon note giving up after 600', 'end run']
+    args = [f"档位 {level} · {LEVEL_SHORT[level]}", str(archive.parent), ICLOUD_NOTE if icloud else ""]
     try:
-        result = subprocess.run(["osascript", *sum((["-e", line] for line in script), []), text],
-                                capture_output=True, text=True, timeout=660)
-        if "在访达中显示清理包" in result.stdout:
+        result = subprocess.run(["osascript", "-l", "JavaScript", "-e", DONE_DIALOG_JS, *args],
+                                capture_output=True, text=True, timeout=900)
+        if result.stdout.strip() == "reveal":
             subprocess.run(["open", "-R", str(archive)], capture_output=True, timeout=30)
     except (OSError, subprocess.SubprocessError):
         pass
