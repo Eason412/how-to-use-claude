@@ -35,9 +35,10 @@ description: "在 macOS 上分档清理 Claude Code 与 Claude Desktop 的本机
    ```
 
 2. 由 Codex 或普通终端执行时，先运行审计，按上表说明各档影响，确认用户要哪一档。说明以下几点：
-   - 第一个写操作是完整备份 Claude 配置目录与 `.claude.json`（选清 CC Switch 时另备份其数据库），逐相对路径比较类型、大小、sha256 和符号链接目标，不一致即停止。备份放在用户指定位置（默认桌面）下的 `ClaudeBackups` 文件夹，全部步骤完成后打成 `.tar.gz`（0600，保留符号链接），读回逐项比对一致才删掉未打包的目录；中途停止时保留目录供恢复。位置开了 iCloud“桌面与文稿”同步时脚本会提示，压缩包会被上传；
+   - 第一个写操作是完整备份 Claude 配置目录与 `.claude.json`（选清 CC Switch 时另备份其数据库），逐相对路径比较类型、大小、sha256 和符号链接目标，不一致即停止。备份放在用户指定位置（默认桌面）下的 `Claude清理包` 文件夹，全部步骤完成后打成 `Claude清理包-时间.tar.gz`（0600，保留符号链接），读回逐项比对一致才删掉未打包的目录；中途停止时保留目录供恢复。位置开了 iCloud“桌面与文稿”同步时脚本会提示，压缩包会被上传；
    - 文件只进时间戳废纸篓目录；`claude purge` 与钥匙串删除不经过废纸篓，只能靠备份恢复；
-   - 档位 1 起要求先正常退出所有 Claude Code / Claude Desktop，脚本不结束进程。
+   - 档位 1 起要求先正常退出所有 Claude Code / Claude Desktop，脚本不结束进程；只清缓存且 Claude 正在运行时，缓存目标直接跳过，不要求退出；
+   - 无法确认 Claude 进程状态（`ps` 失败）时脚本停止且不写盘，只有 `--audit` 会报告“无法确认”。
 
 3. 用户明确要求继续后，在真实终端运行，不要用管道代答或增加跳过确认的参数：
 
@@ -47,11 +48,22 @@ description: "在 macOS 上分档清理 Claude Code 与 Claude Desktop 的本机
 
 4. 脚本展示展开后的完整清单，用户输入一次 `CONFIRM` 才写盘。脚本不读取、不保存开机密码；不要让用户把密码发给执行者。
 
-5. 结束后报告备份压缩包路径、废纸篓批次、实际档位与选择、复查结果（身份键是否已无、登录状态两项）。中途停止一律报告为部分完成。
+5. 脚本结束时在终端打印“已完成清理”，并弹出同名对话框（可在访达中显示清理包；SSH 等无图形界面时跳过）。执行者随后报告清理包路径、废纸篓批次、实际档位与选择、复查结果（身份键是否已无、登录状态两项）。中途停止一律报告为部分完成。
 
-   压缩包和废纸篓里仍有旧身份、账号和会话。告诉用户：确认 Claude 正常后删除压缩包并清空废纸篓，清理才算彻底；档位 3 的 purge 和钥匙串删除不经过废纸篓，压缩包删掉后就无法恢复。执行者不代删。
+   然后请用户再确认一次：新开 Claude Code，确认登录状态符合所选档位、技能和 hooks 仍在。用户确认正常后，提醒删除清理包并清空废纸篓，清理才算彻底；清理包和废纸篓里仍有旧身份、账号和会话。档位 3 的 purge 和钥匙串删除不经过废纸篓，清理包删掉后就无法恢复。执行者不代删。
 
 6. 提醒脚本做不到的部分：新开 Claude Code 让开关生效；到 claude.ai 数据隐私设置关闭 “Help Improve our AI models”；档位 3 还要在 Settings → Claude Code 吊销本机 token，共享设备按需登出全部会话。执行者不代登网页账号。
+
+## 自动清理的缓存与日志
+
+档位 0 起自动纳入，仍须通过白名单检查，只移入废纸篓：
+
+```text
+~/.claude/cache、stats-cache.json、telemetry、usage-data、usage.jsonl、usage.with-fix.jsonl
+~/Library/Caches/claude-cli-nodejs、com.anthropic.claudefordesktop*
+~/Library/Logs/Claude、DiagnosticReports/Claude*
+~/Library/Application Support/CrashReporter/Claude*
+```
 
 ## 始终保护
 
@@ -67,7 +79,7 @@ CLAUDE.md、settings.json 与 settings.local.json 中本次未选择的键
 ## 其他选项
 
 - **Claude Desktop**：可只清持久数据与登录态，或连 `/Applications/Claude.app` 一并移入废纸篓。
-- **最小提示词模式**：在 `settings.json` 的 `env` 中设置或移除 `CLAUDE_CODE_SIMPLE=1`；启用后跳过 hooks、skills、plugins、MCP、自动记忆及 `CLAUDE.md` 发现，这些资产不会被删除。
+- **最小提示词模式**：在 `settings.json` 的 `env` 中设置或移除 `CLAUDE_CODE_SIMPLE=1`；启用后跳过 hooks、skills、plugins、MCP、自动记忆及 `CLAUDE.md` 发现，这些资产不会被删除。一次性脚本调用优先考虑 `claude --bare`。
 
 ## 平台
 

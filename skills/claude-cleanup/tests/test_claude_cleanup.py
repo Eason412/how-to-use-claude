@@ -19,7 +19,7 @@ assert SPEC and SPEC.loader
 cleanup = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = cleanup
 SPEC.loader.exec_module(cleanup)
-BACKUPS = "Desktop/ClaudeBackups"
+BACKUPS = "Desktop/Claude清理包"
 
 
 class CleanupTests(unittest.TestCase):
@@ -173,6 +173,7 @@ class CleanupTests(unittest.TestCase):
                 mock.patch.object(cleanup, "claude_processes", return_value=processes or []),
                 mock.patch.object(cleanup, "keychain_services", return_value=[]),
                 mock.patch.object(cleanup, "auth_state", return_value=None),
+                mock.patch.object(cleanup, "notify_done"),
                 mock.patch.object(sys.stdin, "isatty", return_value=True),
                 mock.patch("builtins.input", side_effect=answer),
                 *(extra or []),
@@ -262,7 +263,7 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(len(list((home / ".Trash").glob("claude-cleanup-*/*Claude"))), 1)
 
     def finished_backups(self, home: pathlib.Path) -> list[pathlib.Path]:
-        return [p for p in (home / BACKUPS).glob("claude-cleanup-*") if p.suffix != ".partial"]
+        return [p for p in (home / BACKUPS).glob("Claude清理包-*") if p.suffix != ".partial"]
 
     def backup_with_corruption(self, home: pathlib.Path, corrupt) -> pathlib.Path:
         real_copytree = cleanup.shutil.copytree
@@ -277,7 +278,7 @@ class CleanupTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 cleanup.create_backup(home)
         self.assertEqual(self.finished_backups(home), [])
-        return next((home / BACKUPS).glob("claude-cleanup-*.partial"))
+        return next((home / BACKUPS).glob("Claude清理包-*.partial"))
 
     def test_backup_verification_detects_same_size_content_change(self):
         home = self.home()
@@ -492,6 +493,26 @@ class CleanupTests(unittest.TestCase):
         for value in ("relative", str(claude), str(claude / "cache"), str(home / ".Trash"), str(home / "missing")):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 cleanup.backup_destination(value, home, [claude])
+
+
+    def test_archive_named_cleanup_pack_and_done_dialog_reveals_it(self):
+        home = self.home()
+        archives = [cleanup.archive_backup(cleanup.create_backup(home)) for _ in range(2)]
+        self.assertTrue(all(a.name.startswith("Claude清理包-") and a.name.endswith(".tar.gz") for a in archives))
+        self.assertEqual(len(set(archives)), 2)
+        calls = []
+
+        def run(cmd, **kwargs):
+            calls.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, stdout="button returned:在访达中显示清理包\n", stderr="")
+
+        with mock.patch.object(cleanup.subprocess, "run", side_effect=run):
+            cleanup.notify_done(archives[0], 2)
+        self.assertEqual(calls[0][0], "osascript")
+        self.assertIn("已完成清理", calls[0][-1])
+        self.assertEqual(calls[1], ["open", "-R", str(archives[0])])
+        with mock.patch.object(cleanup.subprocess, "run", side_effect=OSError("no gui")):
+            cleanup.notify_done(archives[0], 2)
 
 
 if __name__ == "__main__":

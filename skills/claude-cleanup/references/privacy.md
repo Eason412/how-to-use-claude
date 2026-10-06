@@ -96,7 +96,7 @@ Codex 是另一套登录：`~/.codex/auth.json`，以及切换器中官方 Codex
 
 ## 常见误区
 
-- 只改当前 `.claude.json` 不够，backups 快照、本脚本的备份压缩包和废纸篓里都还有旧身份；确认无误后删除压缩包并清空废纸篓。
+- 只改当前 `.claude.json` 不够，backups 快照、本脚本的清理包（`Claude清理包-时间.tar.gz`）和废纸篓里都还有旧身份；确认无误后删除清理包并清空废纸篓。
 - 备份放在开了 iCloud“桌面与文稿”同步的桌面时，会连同凭证信息上传到 iCloud；这种情况换一个本地位置。
 - 不要 `rm -rf ~/.claude`：技能、hooks 和隐私开关会一起丢失。
 - 不要把整份 `.claude.json` 或 `claude auth status` 输出贴到公开位置。

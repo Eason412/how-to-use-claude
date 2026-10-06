@@ -22,7 +22,7 @@ import sys
 import tarfile
 import tempfile
 
-BACKUP_FOLDER = "ClaudeBackups"
+BACKUP_NAME = "Claude清理包"  # 文件夹名，也是压缩包名前缀
 LEVEL_NAMES = ("只清缓存日志", "关上报", "关上报 + 清设备标识（保留登录）", "关上报 + 清设备标识 + 登出并清本地会话")
 # 用户级 settings.json 的隐私开关；总开关会连带停自动更新，单独询问
 PRIVACY_ENV = {
@@ -261,10 +261,14 @@ def icloud_synced(path: pathlib.Path, home: pathlib.Path) -> bool:
 
 def create_backup(home: pathlib.Path, ccswitch_db: pathlib.Path | None = None, dest: pathlib.Path | None = None) -> pathlib.Path:
     claude, identity = config_paths(home)
-    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    folder = (dest or home / "Desktop") / BACKUP_FOLDER
+    folder = (dest or home / "Desktop") / BACKUP_NAME
     folder.mkdir(mode=0o700, exist_ok=True)
-    partial = folder / f"claude-cleanup-{stamp}.partial"
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    name, n = f"{BACKUP_NAME}-{stamp}", 1
+    while any((folder / f"{name}{suffix}").exists() for suffix in ("", ".partial", ".tar.gz")):
+        n += 1
+        name = f"{BACKUP_NAME}-{stamp}-{n}"
+    partial = folder / f"{name}.partial"
     final = partial.with_suffix("")
     partial.mkdir(mode=0o700)
     files = bytes_ = 0
@@ -331,6 +335,21 @@ def archive_backup(backup: pathlib.Path) -> pathlib.Path:
         raise RuntimeError(f"备份压缩包校验失败，{len(bad)} 项不一致（如 {bad[0]}），备份目录保留：{backup}")
     shutil.rmtree(backup)
     return archive
+
+
+def notify_done(archive: pathlib.Path, level: int) -> None:
+    """弹出“已完成清理”对话框，可在访达中显示清理包；没有图形界面（如 SSH）时静默跳过。"""
+    text = (f"已完成清理（档位 {level}：{LEVEL_NAMES[level]}）。\n\n清理包：{archive.name}\n\n"
+            "新开 Claude Code 确认一切正常后，删除清理包并清空废纸篓，清理才算彻底。")
+    script = ['on run argv', 'display dialog (item 1 of argv) with title "Claude 清理" buttons {"在访达中显示清理包", "好"} '
+              'default button "好" with icon note giving up after 600', 'end run']
+    try:
+        result = subprocess.run(["osascript", *sum((["-e", line] for line in script), []), text],
+                                capture_output=True, text=True, timeout=660)
+        if "在访达中显示清理包" in result.stdout:
+            subprocess.run(["open", "-R", str(archive)], capture_output=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        pass
 
 
 def real_location(path: pathlib.Path) -> pathlib.Path:
@@ -643,12 +662,12 @@ def main(argv: list[str] | None = None) -> int:
             targets.append(app)
 
         dest = backup_destination(
-            input("备份位置：在其下建 ClaudeBackups 文件夹，结束时打成压缩包（回车用桌面）："), home, [claude, identity, *targets]
+            input(f"备份位置：在其下建“{BACKUP_NAME}”文件夹，结束时打成压缩包（回车用桌面）："), home, [claude, identity, *targets]
         )
         print("\n最终执行清单：")
-        print(f"1. 第一个写操作：完整备份 Claude 配置目录与 .claude.json 到 {dest / BACKUP_FOLDER} 并逐项校验"
-              + ("，另备份 CC Switch 数据库" if clear_switch else "") + "；全部完成后打成 .tar.gz 压缩包并读回比对。"
-              + "压缩包里仍有旧身份、账号和会话，确认无误后由你自行删除。")
+        print(f"1. 第一个写操作：完整备份 Claude 配置目录与 .claude.json 到 {dest / BACKUP_NAME} 并逐项校验"
+              + ("，另备份 CC Switch 数据库" if clear_switch else "") + f"；全部完成后打成“{BACKUP_NAME}-时间.tar.gz”并读回比对。"
+              + "清理包里仍有旧身份、账号和会话，确认无误后由你自行删除。")
         if icloud_synced(dest, home):
             print("   注意：该位置在 iCloud“桌面与文稿”同步范围内，压缩包会上传到 iCloud；不想上传就取消后换个位置。")
         if level >= 1:
@@ -712,8 +731,8 @@ def main(argv: list[str] | None = None) -> int:
             raise RuntimeError("身份键仍在（可能有 Claude 进程写回）：" + ", ".join(left))
         archive = archive_backup(backup)
         backup = None
-        print("\n完成。未清空废纸篓。")
-        print(f"备份压缩包：{archive}")
+        print("\n==== 已完成清理 ====")
+        print(f"清理包：{archive}")
         if moved:
             print(f"废纸篓批次：{batch}")
         if level >= 3:
@@ -722,8 +741,9 @@ def main(argv: list[str] | None = None) -> int:
         if level >= 1:
             print("下一步：新开 Claude Code 让开关生效；到 claude.ai 设置关闭 Help Improve our AI models，"
                   + ("并在 Settings > Claude Code 吊销本机 token、按需登出全部会话。" if level >= 3 else "按需吊销不用的 Claude Code token。"))
-        print("要彻底去掉旧痕迹：确认 Claude 正常后，删除上面的备份压缩包并清空废纸篓"
+        print("要彻底去掉旧痕迹：新开 Claude Code 确认正常后，删除上面的清理包并清空废纸篓（脚本没有清空废纸篓）"
               + ("；删除后，purge 掉的会话和钥匙串凭证就无法再恢复。" if level >= 3 else "。"))
+        notify_done(archive, level)
         return 0
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError, json.JSONDecodeError, sqlite3.Error,
             tarfile.TarError) as error:
