@@ -28,6 +28,10 @@ Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官�
 - 普通规则可能被 global／direct 模式绕过；支持绑定固定 proxy 的 loopback 入站可限定实际进入该入口的请求，但不保护绕口 socket。
 - empty-fallback 需要确认版本支持及运行行为，缺省行为不能假设为拒绝。v1.19.31 [解析器](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/adapter/outboundgroup/parser.go)存在 COMPATIBLE 默认路径；这只是该版本源码证据，不代替当前空组测试。
 - 固定入站行为可参考相应版本的 [路由实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/tunnel/tunnel.go)及 [入站实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/listener/inbound/base.go)，当前内核另行核对。
+- 入站的 `rule` 指向 `sub-rules` 时，该入口按专属规则分流（如浏览器入口让国内名单直连）；找不到对应 sub-rule 会回落到主规则。交付前读回运行态的 listeners 与 sub-rules，并用隔离实例验证命中。需要硬绑定的入口仍用 `proxy`。
+- 整个应用包用 `PROCESS-PATH-REGEX` 匹配安装路径，能覆盖 helper、更新器和包内工具，比逐个写进程名稳；UDP 拒绝同样按路径写。`IP-ASN` 依赖额外的 ASN 数据库，加载失败会拖垮整份配置，已知网段优先用 `IP-CIDR … no-resolve`。
+- 服务模式下，控制器 socket 以内核进程参数 `-ext-ctl-unix` 为准，应用配置里记录的路径可能已过期。
+- 隔离验证规则命中：复制生成配置，关闭 TUN、DNS 与 mixed-port，入口改到空闲端口，代理全部换成不可达的合成 HTTP 上游，再按日志里的 `match … using` 判定命中，以及上游失败时是否回落。
 - CLI 显式代理在其自身受支持的设置内配置，不污染全局 shell；GUI 不一定遵循终端环境。被动关联本机 socket 与 inboundPort/sourcePort，不凭时间相邻就宣布某应用已命中。
 - Chrome 等浏览器 helper 名称随版本变化，整浏览器固定范围会涵盖其中其他网站和下载。不能用一个 helper 的证据覆盖所有扩展、native host 或旁路。
 

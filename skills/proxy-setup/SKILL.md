@@ -18,7 +18,7 @@ description: "从零搭建自建代理与固定出口：选购 VPS、部署协�
 3. **云资源**：没有服务器时按 [DigitalOcean 创建](references/digitalocean-create.md) 或所选云的官方流程；防火墙按 [防火墙边界](references/firewall.md)。
 4. **部署协议**：按 [搭建流程](references/setup.md)；选定 HY2 时按 [Hysteria2 分支](references/hysteria2.md)。
 5. **导入客户端**：按 [导入流程](references/import-export.md)，客户端差异读 [Clash Verge／Mihomo](references/clash-verge.md)、[Shadowrocket](references/shadowrocket.md)、[Windows](references/windows.md)；其他客户端先核实能力与原生配置方式，不套用这些客户端的语法。
-6. **分流与固定出口**：普通分流按 [分流规则](references/routing.md)；固定出口按 [链路与边界](references/egress-chain.md)，浏览器／命令行入口与失效保护按 [应用故障保护](references/egress-app-protection.md)，多设备按 [跨客户端适配](references/egress-clients.md)。
+6. **分流与固定出口**：普通分流按 [分流规则](references/routing.md)；固定出口按 [链路与边界](references/egress-chain.md)，浏览器／命令行入口与失效保护按 [应用故障保护](references/egress-app-protection.md)，macOS 内核退出后的按程序兜底按 [应用断线保护](references/macos-app-firewall.md)，多设备按 [跨客户端适配](references/egress-clients.md)。
 7. **首次验收与交付**：生成后读回运行态，分别确认连接、规则命中和性能，跨设备单独验收；按 [验证与迁移](references/egress-validation.md) 选验收项，核对最终 IP、实际路径与规则、故障时不换出口；缺少设备或禁测实际服务时写明未验收范围，不用另一端代替；泄露检查用 [泄露验证](../proxy-maintenance/references/leak-check.md)。交付服务定位、私有客户端配置、使用方式、已测设备、恢复方式与未验证项，之后的变化交给 proxy-maintenance。
 
 ## 施工纪律
