@@ -14,11 +14,13 @@ Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官�
 
 重新激活／切换前先核对该版本是否关闭现有连接，并按 [运行维护](../../proxy-maintenance/references/connection-safety.md) 判断能否实施。经授权从应用重新激活订阅可生成持久配置；API 热加载只证明当前运行态，不代表下次仍在。不得用扩展写 mode=rule 冒充锁住 GUI 全局模式。
 
+直接改扩展文件后，应用不一定自动重新生成运行配置。先确认生成配置的修改时间晚于扩展、运行态行为已变化，再做验收；否则测到的是旧规则。界面上的重新激活不一定生效时，切到另一订阅再切回能可靠重新生成，但会断开现有连接，按上段先判断能否实施。
+
 ## 节点与引用
 
 机场只是节点来源。自有主配置可用受支持 provider 接入；选择 file／http／inline 时核对格式、加载路径与更新机制。源订阅更新不等于 inline 副本更新；file provider 也要确认内核已重新加载当前缓存，不仅文件改变。
 
-依次核对：源订阅 → provider／节点 → 入口组 → dialer-proxy → 最终策略组 → 规则 → 运行态。检查精确引用、成员非空、循环、来源限制和解析错误。节点显示名会变，业务规则用稳定的自有策略名。空组、缓存坏、引用丢失和解析失败分开测试；加载失败可能保留旧运行配置。
+依次核对：源订阅 → provider／节点 → 入口组 → dialer-proxy → 最终策略组 → 规则 → 运行态。检查精确引用、成员非空、循环、来源限制和解析错误。节点显示名会变，业务规则用稳定的自有策略名。入口组不要用精确节点名过滤：机场下线该节点后组变空，配合 empty-fallback 拒绝会让整条链全部失败。优先按类型、地区等稳定特征过滤，并排除使用者网络不通的协议，再用 url-test 自动选择；备用 profile 切换前读一次组成员。空组、缓存坏、引用丢失和解析失败分开测试；加载失败可能保留旧运行配置。
 
 当前 Mihomo 链式代理通常用 dialer-proxy，而非旧 relay。ISP 节点引用中转，中转可引用机场入口；电脑直连 VPS 时不要保留机场 dialer-proxy。不是链中的每个节点都需要一个可选组；只暴露用户确实要切换的策略，不能删除仍被链引用的内部节点。
 
@@ -29,6 +31,7 @@ Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官�
 - empty-fallback 需要确认版本支持及运行行为，缺省行为不能假设为拒绝。v1.19.31 [解析器](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/adapter/outboundgroup/parser.go)存在 COMPATIBLE 默认路径；这只是该版本源码证据，不代替当前空组测试。
 - 固定入站行为可参考相应版本的 [路由实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/tunnel/tunnel.go)及 [入站实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/listener/inbound/base.go)，当前内核另行核对。
 - 入站的 `rule` 指向 `sub-rules` 时，该入口按专属规则分流（如浏览器入口让国内名单直连）；找不到对应 sub-rule 会回落到主规则。交付前读回运行态的 listeners 与 sub-rules，并用隔离实例验证命中。需要硬绑定的入口仍用 `proxy`。
+- sub-rule 和硬绑定 `proxy` 的入口都不经过主规则里的局域网直连。使用者要访问内网时，在该 sub-rule 最前面放私网段 `IP-CIDR … DIRECT,no-resolve`；硬绑定入口无法例外，命令行改在 NO_PROXY 里排除私网段。否则内网请求被送到最终出口，通常返回 502。
 - 整个应用包用 `PROCESS-PATH-REGEX` 匹配安装路径，能覆盖 helper、更新器和包内工具，比逐个写进程名稳；UDP 拒绝同样按路径写。`IP-ASN` 依赖额外的 ASN 数据库，加载失败会拖垮整份配置，已知网段优先用 `IP-CIDR … no-resolve`。
 - 服务模式下，控制器 socket 以内核进程参数 `-ext-ctl-unix` 为准，应用配置里记录的路径可能已过期。
 - 隔离验证规则命中：复制生成配置，关闭 TUN、DNS 与 mixed-port，入口改到空闲端口，代理全部换成不可达的合成 HTTP 上游，再按日志里的 `match … using` 判定命中，以及上游失败时是否回落。
