@@ -20,6 +20,7 @@ description: "维护已在使用的代理与固定出口：订阅更新、连接
 | 任务 | 参考 |
 |---|---|
 | 切订阅后断网、更新节点或规则 | [订阅更新](references/subscription-update.md) |
+| 给应用加入固定出口、保存后未生效、内核缺少规则 | [配置加载与应用验收](references/config-loading.md) |
 | 超时、慢、某协议或地址失败、资源占用 | [分层排查](references/troubleshooting.md)（含性能对照） |
 | DNS／WebRTC 是否绕过代理 | [泄露验证](references/leak-check.md)；要求代理停止后也不直连时读 [应用故障保护](../proxy-setup/references/egress-app-protection.md) |
 | 在订阅卡片显示 VPS 月用量 | [月用量卡片](references/quota-card.md) |
