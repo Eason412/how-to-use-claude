@@ -1,6 +1,6 @@
 # IPRoyal 适配
 
-仅在实际最终代理供应商为 IPRoyal 时读取；其他供应商按其产品文档和订单检查，不照搬条款。当前订单、IP、端口与凭证定位留 [项目入口](../SKILL.md#环境记录)，使用前现场核实。
+仅在实际最终代理供应商为 IPRoyal 时读取；其他供应商按其产品文档和订单检查，不照搬条款。当前订单、IP、端口与凭证定位留 [项目入口](../SKILL.md#环境记录)。
 
 ## 认证与协议
 
@@ -25,5 +25,3 @@ IP 白名单、密码认证、并发和设备许可按当前产品确认。设�
 - [会话限制](https://help.iproyal.com/en/articles/7222629-how-many-sessions-can-i-use-at-once)
 - [ISP 使用说明](https://help.iproyal.com/en/articles/7955587-how-to-use-isp-proxies)
 - [合理使用](https://help.iproyal.com/en/articles/12094903-what-is-the-fair-usage-policy)
-
-引用是检索入口，不是当前条款已核实的证明。

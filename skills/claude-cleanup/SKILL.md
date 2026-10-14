@@ -5,7 +5,7 @@ description: "在 macOS 上分档清理 Claude Code 与 Claude Desktop 的本机
 
 # Claude 本机清理
 
-使用随附脚本执行，不要临时拼接 `rm`。脚本采用窄白名单、先完整备份并逐项校验、一次最终知情确认和失败即停止。`SKILL_DIR` 指本 `SKILL.md` 所在目录的绝对路径。能做什么、不能做什么，以及各开关的含义，读 [隐私范围与数据地图](references/privacy.md)。
+使用随附脚本，不临时拼接删除命令。`SKILL_DIR` 为本文件所在目录的绝对路径；各档范围见 [隐私范围与数据地图](references/privacy.md)。
 
 ## 输出纪律
 
@@ -32,13 +32,13 @@ description: "在 macOS 上分档清理 Claude Code 与 Claude Desktop 的本机
    uv run --no-project python "$SKILL_DIR/scripts/claude_cleanup.py" --audit
    ```
 
-2. 由 Codex 或普通终端执行时，先运行审计，按上表说明各档影响，确认用户要哪一档。说明以下几点：
-   - 第一个写操作是完整备份 Claude 配置目录与 `.claude.json`（选清 CC Switch 时另备份其数据库），逐相对路径比较类型、大小、sha256 和符号链接目标，不一致即停止。备份放在用户指定位置（默认桌面）下的 `Claude清理包` 文件夹，全部步骤完成后打成 `Claude清理包-时间.tar.gz`（0600，保留符号链接），读回逐项比对一致才删掉未打包的目录；中途停止时保留目录供恢复。位置开了 iCloud“桌面与文稿”同步时脚本会提示，压缩包会被上传；
-   - 文件只进时间戳废纸篓目录；`claude purge` 与钥匙串删除不经过废纸篓，只能靠备份恢复；
+2. 由 Codex 或普通终端执行时，先审计，说明推荐档位与以下影响，再由用户在脚本中选档并最终确认：
+   - 首个写操作备份配置目录与 `.claude.json`，选清 CC Switch 时另备份数据库；校验通过才清理。备份放在指定位置（默认桌面）的 `Claude清理包` 文件夹，完成后打成 `Claude清理包-时间.tar.gz`（0600，保留符号链接），读回校验通过才删未打包副本；中断保留恢复目录。默认位置可能受 iCloud“桌面与文稿”同步，连同凭证信息上传；这种情况换一个本地位置；
+   - 文件只进时间戳废纸篓目录；`claude purge` 与钥匙串删除不经废纸篓。项目会话可从清理包恢复；钥匙串凭证不备份，删除后需重新登录；
    - 档位 1 起要求先正常退出所有 Claude Code / Claude Desktop，脚本不结束进程；只清缓存且 Claude 正在运行时，缓存目标直接跳过，不要求退出；
    - 无法确认 Claude 进程状态（`ps` 失败）时脚本停止且不写盘，只有 `--audit` 会报告“无法确认”。
 
-3. 用户明确要求继续后，在真实终端运行，不要用管道代答或增加跳过确认的参数：
+3. 在真实终端运行，不用管道代答或跳过确认：
 
    ```bash
    uv run --no-project python "$SKILL_DIR/scripts/claude_cleanup.py"
@@ -46,22 +46,15 @@ description: "在 macOS 上分档清理 Claude Code 与 Claude Desktop 的本机
 
 4. 脚本展示展开后的完整清单，用户输入一次 `CONFIRM` 才写盘。脚本不读取、不保存开机密码；不要让用户把密码发给执行者。
 
-5. 脚本结束时在终端打印“已完成清理”，并弹出同名对话框（可在访达中显示清理包；SSH 等无图形界面时跳过）；清理包落在 iCloud“桌面与文稿”同步范围内时，终端与对话框都再提醒一次，删除后还要到 iCloud.com 的“最近删除”中彻底删除。执行者随后报告清理包路径、废纸篓批次、实际档位与选择、复查结果（身份键是否已无、登录状态两项）。中途停止一律报告为部分完成。
+5. 执行者报告清理包路径、废纸篓批次、实际档位与选择、复查结果（身份键是否已无、登录状态两项；档位 3 选保留 memory 时含脚本报告的恢复目录数）。中途停止一律报告为部分完成。清理包落在 iCloud“桌面与文稿”同步范围内时，提醒删除后还要到 iCloud.com 的“最近删除”中彻底删除。
 
-   然后请用户再确认一次：新开 Claude Code，确认登录状态符合所选档位、技能和 hooks 仍在。用户确认正常后，提醒删除清理包并清空废纸篓，清理才算彻底；清理包和废纸篓里仍有旧身份、账号和会话。档位 3 的 purge 和钥匙串删除不经过废纸篓，清理包删掉后就无法恢复。执行者不代删。
+   然后请用户再确认一次：新开 Claude Code，确认登录状态符合所选档位、技能和 hooks 仍在，选了保留时各项目 memory 也在。用户确认正常后，提醒删除清理包并清空废纸篓，清理才算彻底；其中仍有旧身份、账号和会话，清理包删掉后项目会话无法从中恢复。钥匙串凭证不备份，删除后需重新登录。执行者不代删。
 
-6. 提醒脚本做不到的部分：新开 Claude Code 让开关生效；到 claude.ai 数据隐私设置关闭 “Help Improve our AI models”；档位 3 还要在 Settings → Claude Code 吊销本机 token，共享设备按需登出全部会话。执行者不代登网页账号。
+6. 新开 Claude Code 使设置生效；按 [网页端](references/privacy.md#网页端) 完成隐私设置及档位 3 的令牌吊销。执行者不代登网页账号。
 
 ## 自动清理的缓存与日志
 
-档位 0 起自动纳入，仍须通过白名单检查，只移入废纸篓：
-
-```text
-~/.claude/cache、stats-cache.json、telemetry、usage-data、usage.jsonl、usage.with-fix.jsonl
-~/Library/Caches/claude-cli-nodejs、com.anthropic.claudefordesktop*
-~/Library/Logs/Claude、DiagnosticReports/Claude*
-~/Library/Application Support/CrashReporter/Claude*
-```
+档位 0 起自动纳入可再生缓存和日志，仍经白名单，仅移入废纸篓；路径见 [本地数据地图](references/privacy.md#本地数据地图)。
 
 ## 始终保护
 
@@ -72,15 +65,13 @@ CLAUDE.md、settings.json 与 settings.local.json 中本次未选择的键
 任何项目目录、Git 仓库、Codex 登录与会话、CC Switch 的供应商、端点与 Key
 ```
 
-`projects`、`tasks` 只由 `claude purge`（档位 3）处理，不经脚本移动。`settings.json` 只合并写入所选键，保留其他 env、hooks、权限、模型、MCP、状态栏和秘密。移动前解析目标真实路径（父目录符号链接都会展开），落在受保护目录之内、与其相同或是其祖先时拒绝；目标本身是符号链接时只移动链接。
+不整删 `settings.json`，只合并所选键并保护上述用户资产；`projects`、`tasks` 只由档位 3 的 `claude purge` 处理，不经脚本移动。路径保护见 [本地数据地图](references/privacy.md#本地数据地图)。
 
 ## 其他选项
 
 - **Claude Desktop**：可只清持久数据与登录态，或连 `/Applications/Claude.app` 一并移入废纸篓。
-- **最小提示词模式**：在 `settings.json` 的 `env` 中设置或移除 `CLAUDE_CODE_SIMPLE=1`；启用后跳过 hooks、skills、plugins、MCP、自动记忆及 `CLAUDE.md` 发现，这些资产不会被删除。一次性脚本调用优先考虑 `claude --bare`。
+- **最小提示词模式**：在 `settings.json` 的 `env` 中设置或移除 `CLAUDE_CODE_SIMPLE=1`；启用后跳过 hooks、skills、plugins、MCP、自动记忆及 `CLAUDE.md` 发现，这些资产不会被删除。
 
 ## 平台
 
 脚本只支持 macOS。Linux 与 Windows 的凭证位置和手动步骤见 [隐私范围与数据地图](references/privacy.md#凭证位置)，按其中的布尔探测与删除顺序人工执行。
-
-本 skill 不用于规避封禁、支付检查、设备或 IP 信誉、浏览器指纹或任何平台风控。

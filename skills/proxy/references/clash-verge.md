@@ -1,20 +1,20 @@
 # Clash Verge／Mihomo 适配
 
-仅在实际客户端为 Clash Verge 或内核为 Mihomo 时使用。本页不是其他 VPN 客户端的通用语法；按安装版本核对官方资料。
+适用于实际客户端为 Clash Verge 或内核为 Mihomo 的环境；按安装版本核对官方资料。
 
-Windows额外读 [Windows适配](windows.md)：原生SSH、NTFS权限、服务模式与TUN、命名管道／本地控制器及WSL差异；不要照抄Mac路径和Helper进程名。
+Windows 额外读 [Windows 适配](windows.md)：原生 SSH、NTFS 权限、服务模式与 TUN、命名管道／本地控制器及 WSL 差异。
 
 ## 定位与持久化
 
-从应用配置目录的 profiles.yaml 查当前 UID 与专属 merge／script／rules／proxies／groups；核对全局扩展和生成的运行配置。UID、socket、版本和组选择留项目记录，不固定在技能。
+从应用配置目录的 profiles.yaml 查当前 UID 与专属 merge／script／rules／proxies／groups；核对全局扩展和生成的运行配置。
 
 读取控制器前确认当前本地 Unix socket／loopback 返回有效 JSON，secret 在进程内使用，不放 URL 或日志。只读优先 GET /configs、/rules、/providers/rules；/connections 仅筛选本次目标。连接失败不扩大监听范围或更换密钥。
 
 Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官方扩展说明](https://www.clashverge.dev/guide/extend.html)与最终生成结果核对，不只检查某一层脚本。共同规则放合适的共享扩展，专属链放实际 profile 的扩展或自有主配置；应用可能最终回写 mode、tun 等字段。
 
-重新激活／切换前先核对该版本是否关闭现有连接，并按 [运行维护](connection-safety.md) 判断能否实施。经授权从应用重新激活订阅可生成持久配置；API 热加载只证明当前运行态，不代表下次仍在。不得用扩展写 mode=rule 冒充锁住 GUI 全局模式。
+重新激活／切换可能关闭现有连接，先核对安装版本并按 [运行维护](connection-safety.md) 判断能否实施。不得用扩展写 mode=rule 冒充锁住 GUI 全局模式。
 
-直接改扩展文件后，应用不一定自动重新生成运行配置。通过已核实的客户端入口生成和加载，比较目标规则在生成结果与内核中的内容、顺序，再验收应用新连接；文件时间或保存提示不代替这些证据。入口行为依安装版本核实，不默认切订阅或重启；完整排查见 [配置加载与应用验收](config-loading.md)。
+扩展文件修改后的生成、加载与验收见 [配置加载与应用验收](config-loading.md)。
 
 ## 节点与引用
 
@@ -35,8 +35,8 @@ Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官�
 - 整个应用包用 `PROCESS-PATH-REGEX` 匹配安装路径，能覆盖 helper、更新器和包内工具，比逐个写进程名稳；UDP 拒绝同样按路径写。`IP-ASN` 依赖额外的 ASN 数据库，加载失败会拖垮整份配置，已知网段优先用 `IP-CIDR … no-resolve`。
 - 服务模式下，控制器 socket 以内核进程参数 `-ext-ctl-unix` 为准，应用配置里记录的路径可能已过期。
 - 隔离验证规则命中：复制生成配置，关闭 TUN、DNS 与 mixed-port，入口改到空闲端口，代理全部换成不可达的合成 HTTP 上游，再按日志里的 `match … using` 判定命中，以及上游失败时是否回落。
-- CLI 显式代理在其自身受支持的设置内配置，不污染全局 shell；GUI 不一定遵循终端环境。被动关联本机 socket 与 inboundPort/sourcePort，不凭时间相邻就宣布某应用已命中。
-- Chrome 等浏览器 helper 名称随版本变化，整浏览器固定范围会涵盖其中其他网站和下载。不能用一个 helper 的证据覆盖所有扩展、native host 或旁路。
+- CLI 显式入口与连接归属见 [应用故障保护](egress-app-protection.md#命令行与故障验收)。
+- 浏览器 helper 与保护范围见 [应用故障保护](egress-app-protection.md#范围与取舍)。
 
 规则源与语法参考：[Mihomo 规则](https://wiki.metacubex.one/config/rules/)、[节点集合](https://wiki.metacubex.one/config/proxy-providers/)、[规则集合](https://wiki.metacubex.one/config/rule-providers/)。实际测试的范围按 [固定出口验收](egress-validation.md)执行。
 

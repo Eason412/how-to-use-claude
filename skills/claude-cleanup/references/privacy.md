@@ -1,6 +1,6 @@
 # 隐私范围与数据地图
 
-字段和开关以安装版本为准；本页写法按 Claude Code 2.1 核对，新版本先用 `--help` 和官方文档复核。处理原则是“字段存在就处理”，不假设固定的 JSON 骨架。
+本页按 Claude Code 2.1 核对；其他版本用 `--help` 与官方文档复核，按实际存在字段处理。
 
 ## 能停什么、不能停什么
 
@@ -8,7 +8,7 @@
 
 | 想停的 | 本机能否做到 | 说明 |
 |---|---|---|
-| 用量遥测、错误上报、问卷、特性开关拉取 | 能 | 用户级 `settings.json` 的 env 开关 |
+| 用量遥测、错误上报、问卷、特性开关拉取 | 能 | 用户级 `settings.json` 的 env 变量与顶层设置 |
 | 本机 `userID`／`machineID` 把多次使用串成同一设备 | 能 | 删除键后下次启动重新生成；仍登录时用量照样记在该账号 |
 | 官方 OAuth 登录（邮箱、令牌、组织信息） | 能 | `claude auth logout` 后再扫残留 |
 | 发给官方后端的对话内容 | 不能 | 提示词就是请求本身 |
@@ -18,7 +18,9 @@
 
 ## 隐私开关（档位 1）
 
-写在用户级 `~/.claude/settings.json` 的 `env`，不写进会提交到 Git 的项目级 `.claude/settings.json`。合并写入，保留已有键。
+写入用户级 `~/.claude/settings.json`，不写进会提交到 Git 的项目级 `.claude/settings.json`。合并写入，保留已有键；改完新开 Claude Code。
+
+以下变量写在 `env` 中：
 
 | 键 | 作用 |
 |---|---|
@@ -27,12 +29,17 @@
 | `DISABLE_BUG_COMMAND` | 停 `/bug` |
 | `DO_NOT_TRACK` | 连带停问卷等 |
 | `CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL` | 不自动安装官方市场插件 |
+| `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` | 总开关：等价于上面几项再加停自动更新、发版检查和其他非必要出站；要安全补丁时不用 |
+
+这组 env 变量设了非空值即生效，写成 `"0"` 仍是开启；恢复时删除该键。脚本为前五项写入 `"1"`，总开关单独询问。
+
+以下设置写在 `settings.json` 顶层，按表中数值或布尔值生效：
+
+| 设置 | 作用 |
+|---|---|
 | `feedbackSurveyRate: 0` | 不再弹会话质量问卷 |
 | `skipWebFetchPreflight: true` | WebFetch 前不再把目标域名发给官方预检 |
 | `cleanupPeriodDays` | 本地会话保留天数（默认 30，最小 1）；会自动删除更早的会话，用户要求才设 |
-| `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` | 总开关：等价于上面几项再加停自动更新、发版检查和其他非必要出站；要安全补丁时不用 |
-
-这些开关“设了非空值即生效”，写成 `"0"` 仍是开启；恢复时删除该键。改完必须新开 Claude Code。
 
 ## 本地数据地图
 
@@ -48,8 +55,13 @@
 | `~/.claude/projects/` | 会话记录、工具结果、memory/ | 3 由 `claude purge` 删除 |
 | `~/.claude/.credentials.json`、`mcp-needs-auth-cache.json` | 凭证落盘回退、MCP 授权缓存 | 3 移走 |
 | `~/.claude/skills`、`hooks`、`plugins` 等 | 用户资产 | 始终保留 |
+| `~/.claude/cache`、`stats-cache.json`、`telemetry`、`usage-data`、`usage.jsonl`、`usage.with-fix.jsonl` | 可再生缓存和日志 | 0 移入废纸篓 |
+| `~/Library/Caches/claude-cli-nodejs`、`com.anthropic.claudefordesktop*` | macOS 缓存 | 0 移入废纸篓 |
+| `~/Library/Logs/Claude`、`DiagnosticReports/Claude*`、`~/Library/Application Support/CrashReporter/Claude*` | macOS 日志与崩溃报告 | 0 移入废纸篓 |
 
-删除身份键时删整个键，不改成空字符串。清除的键：`userID`、`anonymousId`、`machineID`、`remoteControlMachineId`、`firstStartTime`、`claudeCodeFirstTokenDate`，以及 `cachedGrowthBookFeatures`、`cachedExperimentFeatures`、`cachedExperimentData`、`metricsStatusCache`、`clientDataCacheSlots`、`groveConfigCache`、`passesEligibilityCache` 等缓存键。项目条目里的 `last*` 用量统计可选清除；`allowedTools` 和信任状态保留，否则每个目录会再问一次。
+`settings.json` 只合并所选键，保留其他 env、hooks、权限、模型、MCP、状态栏和秘密。移动前解析目标真实路径（父目录符号链接都会展开），落在 [受保护资产](../SKILL.md#始终保护) 内、与其相同或是其祖先时拒绝；目标本身是符号链接时只移动链接。
+
+删除身份键时删整个键，不改成空字符串。清除的键：`userID`、`anonymousId`、`machineID`、`remoteControlMachineId`、`firstStartTime`、`claudeCodeFirstTokenDate`，以及 `cachedGrowthBookFeatures`、`cachedExperimentFeatures`、`cachedExperimentData`、`metricsStatusCache`、`clientDataCacheSlots`、`groveConfigCache`、`passesEligibilityCache` 等缓存键。项目条目里的 `last*` 用量统计可选清除；这一步保留 `allowedTools` 和信任状态，否则每个目录会再问一次；档位 3 的 purge 另会删除全部项目信任项。
 
 ## 凭证位置
 
@@ -74,33 +86,25 @@ $j = Get-Content (Join-Path $env:USERPROFILE '.claude.json') -Raw | ConvertFrom-
 
 ## 登出与 purge（档位 3）
 
-`claude auth logout` 移除令牌与 `oauthAccount`，并重置首次启动状态。`claude purge --all`（旧版本为 `claude project purge --all`）删除全部项目会话与 memory/、`tasks`、`debug`、`file-history`，以及 `.claude.json` 中所有项目信任项；技能和 hooks 不受影响。
+`claude auth logout` 移除令牌与 `oauthAccount`，并重置首次启动状态。`claude purge --all`（旧版本为 `claude project purge --all`）删除全部项目会话与 memory/、`tasks`、`debug`、`file-history`，以及 `.claude.json` 中所有项目信任项；技能和 hooks 不受影响；脚本默认从备份恢复 memory/。
 
-登出后复查：`.claude.json` 不再有 `oauthAccount`、`userID`、`machineID`；凭证文件与钥匙串条目已无；`claude auth status` 为 `loggedIn=false`、`authMethod=none`。仍有旧 `claude` 进程时先退出，否则它可能把登录态写回文件。本机登出不等于服务端立刻作废令牌，还要到网页端吊销。
+登出后复查：`.claude.json` 不再有 `oauthAccount`、`userID`、`machineID`；凭证文件与钥匙串条目已无；`claude auth status` 为 `loggedIn=false`、`authMethod=none`。按 [运行顺序](../SKILL.md#运行顺序) 退出旧进程，以免它把登录态写回文件。本机登出不等于服务端立刻作废令牌，还要到网页端吊销。
 
 ## 供应商切换器
 
 以 CC Switch 为例，原则同样适用于其他切换器：官方 Claude 登录态不在切换器数据库里，第三方 Key 在。
 
-- 切换器的“官方登录”槽位通常只表示“不写 `ANTHROPIC_AUTH_TOKEN`、走官方 OAuth”，没有令牌。切回官方时先 `claude auth logout` 再 `claude auth login`。
+- 切换器的“官方登录”槽位通常只表示“不写 `ANTHROPIC_AUTH_TOKEN`、走官方 OAuth”，没有令牌。
 - 可删：由本机 Claude 会话解析出的用量行（`proxy_request_logs`、`usage_daily_rollups` 中 `app_type='claude'`，`session_log_sync` 中指向 `.claude` 的记录）。官方与第三方用量在这里分不开，会话已 purge 后只剩脏索引。
-- 不动：`providers`、`provider_endpoints`、通用配置片段、Codex／Gemini 等其他产品的表和用量、切换器自己的 backups（含 API Key）。表名随版本变化，先看结构再删；脚本遇到不存在的表或列直接跳过。
+- 不动：`providers`、`provider_endpoints`、通用配置片段、Codex／Gemini 等其他产品的表和用量、切换器自己的 backups（含 API Key）；Codex 的独立登录 `~/.codex/auth.json` 与切换器官方 Codex 槽位中的令牌也不动。表名随版本变化，先看结构再删；脚本遇到不存在的表或列直接跳过。
 - 切换器运行时可能把当前供应商配置回写进 `settings.json`。写完隐私开关后到切换器的通用配置里核对 env 仍在。
-
-Codex 是另一套登录：`~/.codex/auth.json`，以及切换器中官方 Codex 槽位里的令牌。清 Claude 时不动它们。
 
 ## 网页端
 
 1. [数据隐私设置](https://claude.ai/settings/data-privacy-controls)：关闭 “Help Improve our AI models”。
 2. [Settings → Claude Code](https://claude.ai/settings)：吊销不用的本机令牌；[账号页](https://claude.ai/settings/account) 可登出全部会话。
 
-## 常见误区
-
-- 只改当前 `.claude.json` 不够，backups 快照、本脚本的清理包（`Claude清理包-时间.tar.gz`）和废纸篓里都还有旧身份；确认无误后删除清理包并清空废纸篓。
-- 备份放在开了 iCloud“桌面与文稿”同步的桌面时，会连同凭证信息上传到 iCloud；这种情况换一个本地位置。
-- 不要 `rm -rf ~/.claude`：技能、hooks 和隐私开关会一起丢失。
-- 不要把整份 `.claude.json` 或 `claude auth status` 输出贴到公开位置。
-- purge 会删除 memory/；需要保留时先备份，脚本默认从备份恢复。
+清理包、废纸篓和可能的 iCloud 副本按 [运行顺序](../SKILL.md#运行顺序) 收尾。
 
 ## 参考
 
