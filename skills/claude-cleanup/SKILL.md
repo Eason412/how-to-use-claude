@@ -5,8 +5,6 @@ description: "在 macOS 上分档清理 Claude Code 与 Claude Desktop 的本机
 
 # Claude 本机清理
 
-三步中的第一步：先清理，再按 proxy-setup 搭建，最后按 proxy-maintenance 维护。
-
 使用随附脚本执行，不要临时拼接 `rm`。脚本采用窄白名单、先完整备份并逐项校验、一次最终知情确认和失败即停止。`SKILL_DIR` 指本 `SKILL.md` 所在目录的绝对路径。能做什么、不能做什么，以及各开关的含义，读 [隐私范围与数据地图](references/privacy.md)。
 
 ## 输出纪律

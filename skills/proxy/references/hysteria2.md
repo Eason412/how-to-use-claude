@@ -1,6 +1,6 @@
 # Hysteria2 从空服务器到客户端
 
-这是已选定 HY2 后的具体部署分支，不意味着它适合所有网络。前提：有可管理的 Linux VPS、目标客户端支持 HY2、计划使用的 UDP 入口可达；Windows／macOS 只是客户端平台，Linux 服务端步骤相同。入口 UDP 被网络阻断时不要宣称换 TCP443规则就能修复，转回 [分层排查](../../proxy-maintenance/references/troubleshooting.md) 选择兼容结构。
+这是已选定 HY2 后的具体部署分支，不意味着它适合所有网络。前提：有可管理的 Linux VPS、目标客户端支持 HY2、计划使用的 UDP 入口可达；Windows／macOS 只是客户端平台，Linux 服务端步骤相同。入口 UDP 被网络阻断时不要宣称换 TCP443规则就能修复，转回 [分层排查](troubleshooting.md) 选择兼容结构。
 
 ## 1. 记录安装范围
 

@@ -1,8 +1,10 @@
-# DigitalOcean 从购买到首次登录
+# DigitalOcean 创建与维护
 
-适用于尚无 VPS 的新建任务。已有服务器直接回 [搭建流程](setup.md)，不为复现流程重复购买。本页是执行顺序与决策检查，不是固定价格／固定界面坐标；实际创建前重新核对 [官方创建说明](https://docs.digitalocean.com/products/droplets/how-to/create/) 与控制台。
+## 创建与首次登录
 
-## 1. 定预算与用途
+适用于尚无 VPS 的新建任务。已有服务器直接回 [搭建流程](deploy.md)，不为复现流程重复购买。本页是执行顺序与决策检查，不是固定价格／固定界面坐标；实际创建前重新核对 [官方创建说明](https://docs.digitalocean.com/products/droplets/how-to/create/) 与控制台。
+
+### 1. 定预算与用途
 
 先从用户要求确认月预算、所在网络、同时使用设备、预计流量、是否还有其他服务、是否要固定 ISP。只做个人代理可先评估共享 CPU 的小规格；按内存和流量需求选够用的一档，不默认所有人买最低价，也不保证升 CPU 能改善跨境路由。
 
@@ -10,13 +12,13 @@
 
 购买前确认每台目标设备及客户端支持所选协议和证书验证方式。无域名且选HY2时先读 [自有证书分支](hysteria2.md#2-先选证书方式)；手机未确认是iOS还是Android时不能默认小火箭。不能安全验证证书的客户端应先确定替代客户端／证书方案，不买完再靠关闭校验迁就。
 
-## 2. 账号与费用授权
+### 2. 账号与费用授权
 
 复用用户已登录的官方控制台，确认正确团队／项目和可用支付状态。登录验证码、付款信息由用户在官方界面处理；不收集银行卡或把创建授权扩展为预充值／自动扣费修改。
 
 向用户确认总成本口径：实例、出站超额、选用的固定代理／域名和收费附加资源分别计算。信用额度不是永久免费，关机不等于资源已删除或账单停止；生命周期计费按 [当前价格](https://docs.digitalocean.com/products/droplets/details/pricing/) 核实。预算已明确且创建已授权，不再重复询问同一选择；超预算或出现新的付费资源才暂停。
 
-## 3. 填创建表单
+### 3. 填创建表单
 
 在控制台 Create → Droplet（Linux 云服务器）填写。用户的电脑是 Windows 不影响 VPS 选择 Linux。
 
@@ -35,7 +37,7 @@
 
 点击 Create 前最后核对全部选择与授权。点击后记录资源 ID、区域、系统、入口地址和创建状态在项目；若超时，先查询是否已创建，禁止连点导致多买。
 
-## 4. 准备 SSH 密钥
+### 4. 准备 SSH 密钥
 
 Windows 见 [Windows 适配](windows.md) 的 PowerShell 步骤；macOS／Linux 在本机终端使用 OpenSSH。复用合适现有密钥时先确认归属；新密钥用独立文件名，发现重名不覆盖。示例在本机运行，路径按实际用户设置：
 
@@ -45,7 +47,7 @@ ssh-keygen -t ed25519 -f /absolute/private/path/id_vps -C "vps-admin"
 
 交互设置密钥口令，私钥只留管理端；云表单粘贴对应 .pub 的完整单行。macOS／Linux 私有目录 0700、私钥 0600；Windows 用 NTFS ACL，不执行 chmod。参考 [SSH 密钥创建](https://docs.digitalocean.com/products/droplets/how-to/add-ssh-keys/create-with-openssh/)。
 
-## 5. 防火墙与首次登录
+### 5. 防火墙与首次登录
 
 按 [防火墙边界](firewall.md) 为目标实例绑定云规则，管理 TCP22 限当前实际管理来源。来源会经机场／TUN 时核对真实路径，不把网页查到 IP 当 SSH 来源证明。开放代理端口按协议和用户的使用网络单独授权：固定电脑与移动网络需要的来源范围不同；不为了手机方便扩大 SSH。
 
@@ -61,7 +63,7 @@ ssh -i /absolute/private/path/id_vps root@SERVER_IP
 
 默认登录用户按镜像实际说明确认；需要普通管理用户时先添加其公钥与 sudo 权限并独立验证，再考虑收紧旧登录方式，不先禁用唯一入口。
 
-## 6. 创建阶段完成条件
+### 6. 创建阶段完成条件
 
 - 资源只创建了批准数量，信息与费用选择对应。
 - 新 SSH 会话认证成功，管理／恢复入口可用。
@@ -69,3 +71,39 @@ ssh -i /absolute/private/path/id_vps root@SERVER_IP
 - 尚未部署协议时明确说“服务器已准备”，不是“VPN 已可用”。
 
 然后进入 [Hysteria2 部署](hysteria2.md) 或按实际客户端支持选择其他协议。不要自动购买 Reserved IP；只有需要改变入口且已核实费用、授权时才操作。失败资源是否删除由本次授权决定；关机不能作为停止收费的替代，删除前核对 ID、数据及依附资源。
+
+## 既有资源维护
+
+仅在实际云服务商为 DigitalOcean 时读取。当前 Droplet、IP、防火墙 ID、账单与服务状态从项目记录定位并现场复核，不在技能固定快照。
+
+### 来源变化与失联
+
+先区分设备出口、机场出口、ISP 出口和服务器入口地址；SSH 白名单匹配新 SSH 连接实际来源，不一定等于浏览器检测出口。
+
+Cloud Firewall 控制挂载资源流量，不控制云官网登录。目标链路损坏时，管理入口不能只依赖那条坏链。普通 Droplet Console 与 Recovery Console 的网络、账户要求不同，按当前文档核实，不承诺普通控制台必然绕过 SSH 防火墙；没有账户密码时不擅自重置 root。
+
+按 [防火墙流程](firewall.md) 添加本次批准的新管理单来源、验证独立新连接后再收紧旧来源。无需仅为动态 IP 默认部署持云 token 的自动白名单服务，也不把私有管理页面暴露公网作为救援。
+
+### 地址与资源
+
+Reserved IP 是可选入口，不等于服务器默认出站 IP；需要改变出站时另查路由、影响范围与官方方式。新增、解绑及闲置费用现场核对，不能把替换入口当免费只读诊断，也不为速度测试直接删除旧地址。
+
+CPU、内存、进程与服务检查见 [分层排查](troubleshooting.md)。Insights 带宽图通常是速率，不能直接当累计 GB；单次 CPU 峰值不证明持续占满。
+
+### 流量和费用
+
+先读取所选日期范围、套餐、资源存在时间、团队额度、累计出站、超额项、抵扣来源和账单状态，再核对 [官方带宽计费](https://docs.digitalocean.com/platform/billing/bandwidth/) 的当前单位、额度累积和费率。
+
+用户下载时互联网→VPS 是入站，VPS→设备是出站；上传时设备→VPS 是入站，VPS→互联网又是出站。转发协议有开销，不能一律说双倍收费，也不能把入站免费理解成转发上传不计出站。
+
+超额量不是总用量；credits 是抵扣，不自动证明“超额费被退回”。按官方核实的规则和可用数据分别计算资源费、可计费出站与有效抵扣。1 GiB = 1.073741824 GB，图表速率与累计流量、预估与结算分开。
+
+月末新建资源可能按存在时间累积额度，不假定立刻有整月配额；页面数据可能延迟，跨月重置与最终结算另核对。缺累计出站不能凭超额行推算精确总量。预测标明观察天数与代表性，不自动充值、升配或改扣款。
+
+### 官方入口
+
+- [配置云防火墙](https://docs.digitalocean.com/products/networking/firewalls/how-to/configure-rules/)
+- [Droplet Console](https://docs.digitalocean.com/products/droplets/how-to/connect-with-console/)
+- [Recovery Console](https://docs.digitalocean.com/products/droplets/how-to/recovery/recovery-console/)
+- [Reserved IP 出站](https://docs.digitalocean.com/products/networking/reserved-ips/how-to/outbound-traffic/)
+- [Reserved IP 计费](https://docs.digitalocean.com/products/networking/reserved-ips/details/pricing/)

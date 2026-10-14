@@ -1,0 +1,4 @@
+interface:
+  display_name: "代理与固定出口"
+  short_description: "搭建 VPS、协议、客户端、分流与固定出口，完成订阅更新、排障、泄露检查和用量续费维护"
+  default_prompt: "使用 $proxy 按我的需求从现状出发，完成代理与固定出口的搭建、改造、排障或维护，并报告实际验收结果。"

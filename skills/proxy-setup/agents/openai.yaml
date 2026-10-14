@@ -1,4 +1,0 @@
-interface:
-  display_name: "搭建 VPS 与固定出口"
-  short_description: "选购 VPS、部署协议、导入客户端，设计分流与固定出口链路并完成首次验收"
-  default_prompt: "使用 $proxy-setup 按我的需求从现状出发，完成 VPS、代理与固定出口的搭建或改造并验收。"
