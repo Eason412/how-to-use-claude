@@ -32,7 +32,7 @@ Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官�
 - 固定入站行为可参考相应版本的 [路由实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/tunnel/tunnel.go)及 [入站实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/listener/inbound/base.go)，当前内核另行核对。
 - 入站的 `rule` 指向 `sub-rules` 时，该入口按专属规则分流（如浏览器入口让国内名单直连）；找不到对应 sub-rule 会回落到主规则。受保护浏览器同时有 sub-rule 入站和 TUN 进程规则时，两处的直连白名单（含对应图片与音视频 CDN 域名）应在脚本中共用同一数组，避免 TUN 漏掉 CDN 误走固定出口。交付前读回运行态的 listeners 与 sub-rules，并用隔离实例验证命中。需要硬绑定的入口仍用 `proxy`。
 - sub-rule 和硬绑定 `proxy` 的入口都不经过主规则里的局域网直连。使用者要访问内网时，在该 sub-rule 最前面放私网段 `IP-CIDR … DIRECT,no-resolve`；内网有多个子域名时，在受保护应用规则前与 sub-rule 中加 `DOMAIN-SUFFIX` 直连，并在 `dns.nameserver-policy` 中将该域指向 `system`（不要只靠单条 `hosts` 映射）；硬绑定入口无法例外，命令行改在 NO_PROXY 里排除私网段与内网域名。否则内网请求被送到最终出口，通常返回 502。
-- 整个应用包用 `PROCESS-PATH-REGEX` 匹配安装路径，能覆盖 helper、更新器和包内工具，比逐个写进程名稳；UDP 拒绝同样按路径写。仅对普通程序直连、但在受保护浏览器内仍需走固定出口的域名（如系统应用商店），排在受保护应用的 `PROCESS-PATH-REGEX` 之后、`MATCH` 之前。`IP-ASN` 依赖额外的 ASN 数据库，加载失败会拖垮整份配置，已知网段优先用 `IP-CIDR … no-resolve`。
+- 整个应用包用 `PROCESS-PATH-REGEX` 匹配安装路径，能覆盖 helper、更新器和包内工具，比逐个写进程名稳；UDP 拒绝同样按路径写。`IP-ASN` 依赖额外的 ASN 数据库，加载失败会拖垮整份配置，已知网段优先用 `IP-CIDR … no-resolve`。
 - 服务模式下，控制器 socket 以内核进程参数 `-ext-ctl-unix` 为准，应用配置里记录的路径可能已过期。
 - 隔离验证规则命中：复制生成配置，关闭 TUN、DNS 与 mixed-port，入口改到空闲端口，代理全部换成不可达的合成 HTTP 上游，再按日志里的 `match … using` 判定命中，以及上游失败时是否回落。
 - CLI 显式入口与连接归属见 [应用故障保护](egress-app-protection.md#命令行与故障验收)。
