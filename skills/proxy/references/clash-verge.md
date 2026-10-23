@@ -10,7 +10,7 @@ Windows 额外读 [Windows 适配](windows.md)：原生 SSH、NTFS 权限、服�
 
 读取控制器前确认当前本地 Unix socket／loopback 返回有效 JSON，secret 在进程内使用，不放 URL 或日志。只读优先 GET /configs、/rules、/providers/rules；/connections 仅筛选本次目标。连接失败不扩大监听范围或更换密钥。
 
-Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官方扩展说明](https://www.clashverge.dev/guide/extend.html)与最终生成结果核对，不只检查某一层脚本。共同规则放合适的共享扩展，专属链放实际 profile 的扩展或自有主配置；应用可能最终回写 mode、tun 等字段。
+Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官方扩展说明](https://www.clashverge.dev/guide/extend.html)与最终生成结果核对，不只检查某一层脚本。共同规则放合适的共享扩展，专属链放实际 profile 的扩展或自有主配置；应用可能最终回写 mode、tun 等字段。`Merge` 扩展只合并顶层字段，不解析旧版 `prepend-rules`／`append-rules`（会原样留在生成配置顶层并被 Mihomo 忽略），规则增删改用 `rules` 扩展或在 `Script` 中重排；带自动更新的远端配额配置，其规则、组和 DNS 策略应由专属 `Script` 写入，防止更新覆盖。
 
 重新激活／切换可能关闭现有连接，先核对安装版本并按 [运行维护](connection-safety.md) 判断能否实施。不得用扩展写 mode=rule 冒充锁住 GUI 全局模式。
 
@@ -30,9 +30,9 @@ Clash Verge 扩展顺序及列表／DNS 合并语义依版本变化，按 [官�
 - 普通规则可能被 global／direct 模式绕过；支持绑定固定 proxy 的 loopback 入站可限定实际进入该入口的请求，但不保护绕口 socket。
 - empty-fallback 需要确认版本支持及运行行为，缺省行为不能假设为拒绝。v1.19.31 [解析器](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/adapter/outboundgroup/parser.go)存在 COMPATIBLE 默认路径；这只是该版本源码证据，不代替当前空组测试。
 - 固定入站行为可参考相应版本的 [路由实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/tunnel/tunnel.go)及 [入站实现](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/listener/inbound/base.go)，当前内核另行核对。
-- 入站的 `rule` 指向 `sub-rules` 时，该入口按专属规则分流（如浏览器入口让国内名单直连）；找不到对应 sub-rule 会回落到主规则。交付前读回运行态的 listeners 与 sub-rules，并用隔离实例验证命中。需要硬绑定的入口仍用 `proxy`。
-- sub-rule 和硬绑定 `proxy` 的入口都不经过主规则里的局域网直连。使用者要访问内网时，在该 sub-rule 最前面放私网段 `IP-CIDR … DIRECT,no-resolve`；硬绑定入口无法例外，命令行改在 NO_PROXY 里排除私网段。否则内网请求被送到最终出口，通常返回 502。
-- 整个应用包用 `PROCESS-PATH-REGEX` 匹配安装路径，能覆盖 helper、更新器和包内工具，比逐个写进程名稳；UDP 拒绝同样按路径写。`IP-ASN` 依赖额外的 ASN 数据库，加载失败会拖垮整份配置，已知网段优先用 `IP-CIDR … no-resolve`。
+- 入站的 `rule` 指向 `sub-rules` 时，该入口按专属规则分流（如浏览器入口让国内名单直连）；找不到对应 sub-rule 会回落到主规则。受保护浏览器同时有 sub-rule 入站和 TUN 进程规则时，两处的直连白名单（含对应图片与音视频 CDN 域名）应在脚本中共用同一数组，避免 TUN 漏掉 CDN 误走固定出口。交付前读回运行态的 listeners 与 sub-rules，并用隔离实例验证命中。需要硬绑定的入口仍用 `proxy`。
+- sub-rule 和硬绑定 `proxy` 的入口都不经过主规则里的局域网直连。使用者要访问内网时，在该 sub-rule 最前面放私网段 `IP-CIDR … DIRECT,no-resolve`；内网有多个子域名时，在受保护应用规则前与 sub-rule 中加 `DOMAIN-SUFFIX` 直连，并在 `dns.nameserver-policy` 中将该域指向 `system`（不要只靠单条 `hosts` 映射）；硬绑定入口无法例外，命令行改在 NO_PROXY 里排除私网段与内网域名。否则内网请求被送到最终出口，通常返回 502。
+- 整个应用包用 `PROCESS-PATH-REGEX` 匹配安装路径，能覆盖 helper、更新器和包内工具，比逐个写进程名稳；UDP 拒绝同样按路径写。仅对普通程序直连、但在受保护浏览器内仍需走固定出口的域名（如系统应用商店），排在受保护应用的 `PROCESS-PATH-REGEX` 之后、`MATCH` 之前。`IP-ASN` 依赖额外的 ASN 数据库，加载失败会拖垮整份配置，已知网段优先用 `IP-CIDR … no-resolve`。
 - 服务模式下，控制器 socket 以内核进程参数 `-ext-ctl-unix` 为准，应用配置里记录的路径可能已过期。
 - 隔离验证规则命中：复制生成配置，关闭 TUN、DNS 与 mixed-port，入口改到空闲端口，代理全部换成不可达的合成 HTTP 上游，再按日志里的 `match … using` 判定命中，以及上游失败时是否回落。
 - CLI 显式入口与连接归属见 [应用故障保护](egress-app-protection.md#命令行与故障验收)。
